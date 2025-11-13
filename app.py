@@ -43,7 +43,6 @@ try:
     st.sidebar.success("✅ データ読み込み完了！")
     data_loaded = True
 except:
-    st.sidebar.warning("⚠️ dataフォルダからの自動読み込みに失敗しました")
     st.sidebar.markdown("**5つのCSVファイルを一度に選択してアップロード：**")
     
     uploaded_files = st.sidebar.file_uploader(
@@ -242,7 +241,7 @@ if data_loaded:
         # 検索方法の選択
         search_method = st.radio(
             "選手の選択方法",
-            ["📋 リストから選択", "✍️ 名前を入力して選択"],
+            ["📋 リストから選択", "🔍 名前で検索"],
             horizontal=True
         )
         
@@ -253,31 +252,39 @@ if data_loaded:
                 index=0
             )
         else:
-            # テキスト入力で絞り込み
-            search_text = st.text_input(
-                "選手名を入力してください（部分一致で検索）",
-                placeholder="例: 村上、山田、大谷 など",
-                key="player_search"
-            )
+            col1, col2 = st.columns([2, 3])
             
-            # 入力に基づいて候補を絞り込み
-            if search_text:
-                matches = [p for p in sorted_players if search_text in p]
-                
-                if matches:
-                    st.success(f"✅ {len(matches)}人の選手が見つかりました")
-                    selected_player = st.selectbox(
-                        "該当する選手から選択してください",
-                        options=matches,
-                        index=0,
-                        key="filtered_player_select"
-                    )
+            with col1:
+                # テキスト入力
+                search_text = st.text_input(
+                    "選手名を入力",
+                    placeholder="例: 村上、山田、大谷",
+                    key="player_search"
+                )
+            
+            with col2:
+                # リアルタイムで絞り込んだ候補を表示
+                if search_text:
+                    matches = [p for p in sorted_players if search_text in p]
+                    
+                    if matches:
+                        selected_player = st.selectbox(
+                            f"候補 ({len(matches)}人)",
+                            options=matches,
+                            index=0,
+                            key="filtered_player_select"
+                        )
+                    else:
+                        st.warning("該当なし")
+                        selected_player = None
                 else:
-                    st.warning("⚠️ 該当する選手が見つかりません。別の名前で検索してください。")
-                    selected_player = None
-            else:
-                st.info("👆 選手名の一部を入力すると候補が表示されます")
-                selected_player = None
+                    st.info("👈 入力すると候補が表示されます")
+                    selected_player = st.selectbox(
+                        "または全選手から選択",
+                        options=sorted_players,
+                        index=0,
+                        key="all_players_select"
+                    )
         
         predict_year = st.slider("予測年度", 2024, 2026, 2025)
         
