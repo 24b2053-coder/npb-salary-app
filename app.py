@@ -43,6 +43,7 @@ try:
     st.sidebar.success("✅ データ読み込み完了！")
     data_loaded = True
 except:
+    st.sidebar.warning("⚠️ dataフォルダからの自動読み込みに失敗しました")
     st.sidebar.markdown("**5つのCSVファイルを一度に選択してアップロード：**")
     
     uploaded_files = st.sidebar.file_uploader(
@@ -237,11 +238,34 @@ if data_loaded:
             st.session_state.stats_all_with_titles['年度'] == 2024
         ]['選手名'].unique()
         
-        selected_player = st.selectbox(
-            "選手を選択してください",
-            options=sorted(available_players),
-            index=0
+        # 検索方法の選択
+        search_method = st.radio(
+            "選手の選択方法",
+            ["📋 リストから選択", "✍️ 名前を入力"],
+            horizontal=True
         )
+        
+        if search_method == "📋 リストから選択":
+            selected_player = st.selectbox(
+                "選手を選択してください",
+                options=sorted(available_players),
+                index=0
+            )
+        else:
+            selected_player = st.text_input(
+                "選手名を入力してください",
+                placeholder="例: 村上宗隆"
+            )
+            
+            # 入力候補を表示
+            if selected_player:
+                matches = [p for p in available_players if selected_player in p]
+                if matches:
+                    st.info(f"💡 該当する選手: {', '.join(matches[:5])}")
+                    if len(matches) > 5:
+                        st.info(f"... 他 {len(matches)-5}人")
+                else:
+                    st.warning("⚠️ 該当する選手が見つかりません")
         
         predict_year = st.slider("予測年度", 2024, 2026, 2025)
         
@@ -563,4 +587,3 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム - Powered by Streamlit*")
-
