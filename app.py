@@ -51,18 +51,6 @@ except:
     stats_2025_file = st.sidebar.file_uploader("4. 2025年成績", type=['csv'])
     titles_file = st.sidebar.file_uploader("5. タイトルデータ", type=['csv'])
 
-    if salary_file and stats_2023_file and stats_2024_file and stats_2025_file and titles_file:
-        salary_df = pd.read_csv(salary_file)
-        stats_2023 = pd.read_csv(stats_2023_file)
-        stats_2024 = pd.read_csv(stats_2024_file)
-        stats_2025 = pd.read_csv(stats_2025_file)
-        titles_df = pd.read_csv(titles_file)
-        st.sidebar.success("✅ アップロードファイルから読み込み完了")
-    else:
-        st.sidebar.warning("👆 上の5ファイルをすべてアップロードしてください")
-
-
-
 # セッション状態の初期化
 if 'model_trained' not in st.session_state:
     st.session_state.model_trained = False
@@ -547,6 +535,7 @@ else:
 
 # フッター
 st.markdown("---")
+
 
 
 
