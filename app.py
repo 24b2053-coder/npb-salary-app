@@ -20,9 +20,9 @@ st.set_page_config(
 )
 
 # 日本語フォント設定
-!pip install japanize_matplotlib
 import matplotlib.pyplot as plt
 import japanize_matplotlib
+
 plt.rcParams["font.family"] = "IPAexGothic"
 
 # タイトル
@@ -534,6 +534,7 @@ else:
 
 # フッター
 st.markdown("---")
+
 
 
 
