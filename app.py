@@ -33,13 +33,16 @@ st.markdown("---")
 st.sidebar.header("📁 データ読み込み")
 st.sidebar.markdown("アップロードがない場合は `data/` フォルダから読み込みます")
 
+from pathlib import Path
+BASE_DIR = Path(__file__).resolve().parent
+
 # データ読み込み処理
 try:
-    salary_df = pd.read_csv('data/salary_2023&2024&2025.csv')
-    stats_2023 = pd.read_csv('data/stats_2023.csv')
-    stats_2024 = pd.read_csv('data/stats_2024.csv')
-    stats_2025 = pd.read_csv('data/stats_2025.csv')
-    titles_df = pd.read_csv('data/titles_2023&2024&2025.csv')
+    salary_df = pd.read_csv(BASE_DIR / 'data' / 'salary_2023&2024&2025.csv')
+    stats_2023 = pd.read_csv(BASE_DIR / 'data' / 'stats_2023.csv')
+    stats_2024 = pd.read_csv(BASE_DIR / 'data' / 'stats_2024.csv')
+    stats_2025 = pd.read_csv(BASE_DIR / 'data' / 'stats_2025.csv')
+    titles_df = pd.read_csv(BASE_DIR / 'data' / 'titles_2023&2024&2025.csv')
     st.sidebar.success("✅ ローカルファイルからデータ読み込み完了")
 except:
     # ファイルアップロードに切り替え
@@ -58,6 +61,7 @@ except:
         st.sidebar.success("✅ アップロードファイルから読み込み完了")
     else:
         st.sidebar.warning("👆 上の5ファイルをすべてアップロードしてください")
+
 
 
 # セッション状態の初期化
@@ -544,6 +548,7 @@ else:
 
 # フッター
 st.markdown("---")
+
 
 
 
