@@ -29,20 +29,18 @@ plt.rcParams["font.family"] = "IPAexGothic"
 st.title("⚾ NPB選手年俸予測システム")
 st.markdown("---")
 
-# サイドバー表示
-st.sidebar.header("📁 データ読み込み")
-st.sidebar.markdown("アップロードがない場合は `data/` フォルダから読み込みます")
-
-from pathlib import Path
-BASE_DIR = Path(__file__).resolve().parent
+# サイドバー
+st.sidebar.header("📁 データアップロード")
+st.sidebar.markdown("以下の5つのCSVファイルをアップロードしてください：")
 
 # データ読み込み処理
 try:
-    salary_df = pd.read_csv(BASE_DIR / 'data' / 'salary_2023&2024&2025.csv')
-    stats_2023 = pd.read_csv(BASE_DIR / 'data' / 'stats_2023.csv')
-    stats_2024 = pd.read_csv(BASE_DIR / 'data' / 'stats_2024.csv')
-    stats_2025 = pd.read_csv(BASE_DIR / 'data' / 'stats_2025.csv')
-    titles_df = pd.read_csv(BASE_DIR / 'data' / 'titles_2023&2024&2025.csv')
+    salary_file = st.sidebar.file_uploader("1. 年俸データ (salary_2023&2024&2025.csv)", type=['csv'])
+    stats_2023_file = st.sidebar.file_uploader("2. 2023年成績 (stats_2023.csv)", type=['csv'])
+    stats_2024_file = st.sidebar.file_uploader("3. 2024年成績 (stats_2024.csv)", type=['csv'])
+    stats_2025_file = st.sidebar.file_uploader("4. 2025年成績 (stats_2025.csv)", type=['csv'])
+    titles_file = st.sidebar.file_uploader("5. タイトルデータ (titles_2023&2024&2025.csv)", type=['csv'])
+
     st.sidebar.success("✅ ローカルファイルからデータ読み込み完了")
 except:
     # ファイルアップロードに切り替え
@@ -548,6 +546,7 @@ else:
 
 # フッター
 st.markdown("---")
+
 
 
 
