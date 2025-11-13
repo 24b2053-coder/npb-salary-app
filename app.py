@@ -41,7 +41,12 @@ try:
     st.sidebar.success("✅ データ読み込み完了！")
 except:
     # ファイルアップロード処理
-    salary_file = st.sidebar.file_uploader(...)
+    salary_file = st.sidebar.file_uploader("1. 年俸データ (salary_2023&2024&2025.csv)", type=['csv'])
+    stats_2023_file = st.sidebar.file_uploader("2. 2023年成績 (stats_2023.csv)", type=['csv'])
+    stats_2024_file = st.sidebar.file_uploader("3. 2024年成績 (stats_2024.csv)", type=['csv'])
+    stats_2025_file = st.sidebar.file_uploader("4. 2025年成績 (stats_2025.csv)", type=['csv'])
+    titles_file = st.sidebar.file_uploader("5. タイトルデータ (titles_2023&2024&2025.csv)", type=['csv'])
+
 
 # セッション状態の初期化
 if 'model_trained' not in st.session_state:
@@ -527,4 +532,5 @@ else:
 
 # フッター
 st.markdown("---")
+
 
