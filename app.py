@@ -43,7 +43,6 @@ try:
     st.sidebar.success("✅ データ読み込み完了！")
     data_loaded = True
 except:
-    st.sidebar.warning("⚠️ dataフォルダからの自動読み込みに失敗しました")
     st.sidebar.markdown("**5つのCSVファイルを一度に選択してアップロード：**")
     
     uploaded_files = st.sidebar.file_uploader(
@@ -564,3 +563,4 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム - Powered by Streamlit*")
+
