@@ -34,19 +34,16 @@ st.sidebar.header("📁 データアップロード")
 st.sidebar.markdown("以下の5つのCSVファイルをアップロードしてください：")
 
 # データ読み込み処理
-from pathlib import Path
-BASE_DIR = Path(__file__).resolve().parent
-
 st.sidebar.markdown("アップロードがない場合は `data/` フォルダから自動読み込みします。")
 
 salary_file = stats_2023_file = stats_2024_file = stats_2025_file = titles_file = None
 
 try:
-    salary_df = pd.read_csv(BASE_DIR / 'data' / 'salary_2023&2024&2025.csv')
-    stats_2023 = pd.read_csv(BASE_DIR / 'data' / 'stats_2023.csv')
-    stats_2024 = pd.read_csv(BASE_DIR / 'data' / 'stats_2024.csv')
-    stats_2025 = pd.read_csv(BASE_DIR / 'data' / 'stats_2025.csv')
-    titles_df = pd.read_csv(BASE_DIR / 'data' / 'titles_2023&2024&2025.csv')
+    salary_df = pd.read_csv('data/salary_2023&2024&2025.csv')
+    stats_2023 = pd.read_csv('data/stats_2023.csv)
+    stats_2024 = pd.read_csv('data/stats_2024.csv')
+    stats_2025 = pd.read_csv('data/stats_2025.csv')
+    titles_df = pd.read_csv('data/titles_2023&2024&2025.csv')
     st.sidebar.success("✅ ローカルファイルから読み込み完了")
 except:
     salary_file = st.sidebar.file_uploader("1. 年俸データ", type=['csv'])
@@ -54,17 +51,6 @@ except:
     stats_2024_file = st.sidebar.file_uploader("3. 2024年成績", type=['csv'])
     stats_2025_file = st.sidebar.file_uploader("4. 2025年成績", type=['csv'])
     titles_file = st.sidebar.file_uploader("5. タイトルデータ", type=['csv'])
-
-    if salary_file and stats_2023_file and stats_2024_file and stats_2025_file and titles_file:
-        salary_df = pd.read_csv(salary_file)
-        stats_2023 = pd.read_csv(stats_2023_file)
-        stats_2024 = pd.read_csv(stats_2024_file)
-        stats_2025 = pd.read_csv(stats_2025_file)
-        titles_df = pd.read_csv(titles_file)
-        st.sidebar.success("✅ アップロードファイルから読み込み完了")
-    else:
-        st.sidebar.warning("👆 上の5ファイルをすべてアップロードしてください")
-
 
 # セッション状態の初期化
 if 'model_trained' not in st.session_state:
