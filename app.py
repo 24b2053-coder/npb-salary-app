@@ -237,44 +237,59 @@ if data_loaded:
         available_players = st.session_state.stats_all_with_titles[
             st.session_state.stats_all_with_titles['年度'] == 2024
         ]['選手名'].unique()
+        sorted_players = sorted(available_players)
         
         # 検索方法の選択
         search_method = st.radio(
             "選手の選択方法",
-            ["📋 リストから選択", "✍️ 名前を入力"],
+            ["📋 リストから選択", "✍️ 名前を入力して選択"],
             horizontal=True
         )
         
         if search_method == "📋 リストから選択":
             selected_player = st.selectbox(
                 "選手を選択してください",
-                options=sorted(available_players),
+                options=sorted_players,
                 index=0
             )
         else:
-            selected_player = st.text_input(
-                "選手名を入力してください",
-                placeholder="例: 村上宗隆"
+            # テキスト入力で絞り込み
+            search_text = st.text_input(
+                "選手名を入力してください（部分一致で検索）",
+                placeholder="例: 村上、山田、大谷 など",
+                key="player_search"
             )
             
-            # 入力候補を表示
-            if selected_player:
-                matches = [p for p in available_players if selected_player in p]
+            # 入力に基づいて候補を絞り込み
+            if search_text:
+                matches = [p for p in sorted_players if search_text in p]
+                
                 if matches:
-                    st.info(f"💡 該当する選手: {', '.join(matches[:5])}")
-                    if len(matches) > 5:
-                        st.info(f"... 他 {len(matches)-5}人")
+                    st.success(f"✅ {len(matches)}人の選手が見つかりました")
+                    selected_player = st.selectbox(
+                        "該当する選手から選択してください",
+                        options=matches,
+                        index=0,
+                        key="filtered_player_select"
+                    )
                 else:
-                    st.warning("⚠️ 該当する選手が見つかりません")
+                    st.warning("⚠️ 該当する選手が見つかりません。別の名前で検索してください。")
+                    selected_player = None
+            else:
+                st.info("👆 選手名の一部を入力すると候補が表示されます")
+                selected_player = None
         
         predict_year = st.slider("予測年度", 2024, 2026, 2025)
         
         if st.button("🎯 予測実行", type="primary"):
-            stats_year = predict_year - 1
-            player_stats = st.session_state.stats_all_with_titles[
-                (st.session_state.stats_all_with_titles['選手名'] == selected_player) & 
-                (st.session_state.stats_all_with_titles['年度'] == stats_year)
-            ]
+            if not selected_player:
+                st.error("❌ 選手を選択してください")
+            else:
+                stats_year = predict_year - 1
+                player_stats = st.session_state.stats_all_with_titles[
+                    (st.session_state.stats_all_with_titles['選手名'] == selected_player) & 
+                    (st.session_state.stats_all_with_titles['年度'] == stats_year)
+                ]
             
             if not player_stats.empty:
                 player_stats = player_stats.iloc[0]
