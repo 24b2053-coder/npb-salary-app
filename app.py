@@ -30,10 +30,10 @@ st.title("⚾ NPB選手年俸予測システム")
 st.markdown("---")
 
 # サイドバー
-st.sidebar.header("📁 データアップロード")
-st.sidebar.markdown("以下の5つのCSVファイルをアップロードしてください：")
+st.sidebar.header("📁 データ読み込み")
 
 # データ読み込み処理
+data_loaded = False
 try:
     salary_df = pd.read_csv('data/salary_2023&2024&2025.csv')
     stats_2023 = pd.read_csv('data/stats_2023.csv')
@@ -41,31 +41,34 @@ try:
     stats_2025 = pd.read_csv('data/stats_2025.csv')
     titles_df = pd.read_csv('data/titles_2023&2024&2025.csv')
     st.sidebar.success("✅ データ読み込み完了！")
+    data_loaded = True
 except:
+    st.sidebar.warning("⚠️ dataフォルダからの自動読み込みに失敗しました")
+    st.sidebar.markdown("以下から手動でアップロードしてください：")
+    
     salary_file = st.sidebar.file_uploader("1. 年俸データ", type=['csv'])
     stats_2023_file = st.sidebar.file_uploader("2. 2023年成績", type=['csv'])
     stats_2024_file = st.sidebar.file_uploader("3. 2024年成績", type=['csv'])
     stats_2025_file = st.sidebar.file_uploader("4. 2025年成績", type=['csv'])
     titles_file = st.sidebar.file_uploader("5. タイトルデータ", type=['csv'])
+    
+    if salary_file and stats_2023_file and stats_2024_file and stats_2025_file and titles_file:
+        salary_df = pd.read_csv(salary_file)
+        stats_2023 = pd.read_csv(stats_2023_file)
+        stats_2024 = pd.read_csv(stats_2024_file)
+        stats_2025 = pd.read_csv(stats_2025_file)
+        titles_df = pd.read_csv(titles_file)
+        st.sidebar.success("✅ データ読み込み完了！")
+        data_loaded = True
 
 # セッション状態の初期化
 if 'model_trained' not in st.session_state:
     st.session_state.model_trained = False
 
 # データ読み込みとモデル訓練
-if salary_file and stats_2023_file and stats_2024_file and stats_2025_file and titles_file:
+if data_loaded:
     
     if not st.session_state.model_trained:
-        with st.spinner('📊 データを読み込み中...'):
-            # データ読み込み
-            salary_df = pd.read_csv(salary_file)
-            stats_2023 = pd.read_csv(stats_2023_file)
-            stats_2024 = pd.read_csv(stats_2024_file)
-            stats_2025 = pd.read_csv(stats_2025_file)
-            titles_df = pd.read_csv(titles_file)
-            
-            st.sidebar.success("✅ データ読み込み完了！")
-        
         with st.spinner('🤖 モデルを訓練中...'):
             # タイトルデータの前処理
             titles_df = titles_df.dropna(subset=['選手名'])
@@ -195,9 +198,8 @@ if salary_file and stats_2023_file and stats_2024_file and stats_2025_file and t
         st.markdown("---")
         st.subheader("📖 使い方")
         st.markdown("""
-        1. **左サイドバー**から5つのCSVファイルをアップロード
-        2. **メニュー**から機能を選択
-        3. **選手名**を入力して年俸を予測
+        1. **左サイドバー**のメニューから機能を選択
+        2. **選手名**を入力して年俸を予測
         
         ### 機能一覧
         - 🔍 **選手検索・予測**: 個別選手の年俸予測とレーダーチャート
@@ -513,15 +515,23 @@ if salary_file and stats_2023_file and stats_2024_file and stats_2025_file and t
 
 else:
     # ファイル未アップロード時
-    st.info("👈 左サイドバーから5つのCSVファイルをアップロードしてください")
+    st.info("📁 CSVファイルが見つかりませんでした")
     
     st.markdown("""
-    ### 📁 必要なファイル
-    1. `salary_2023&2024&2025.csv` - 年俸データ
-    2. `stats_2023.csv` - 2023年成績
-    3. `stats_2024.csv` - 2024年成績
-    4. `stats_2025.csv` - 2025年成績
-    5. `titles_2023&2024&2025.csv` - タイトルデータ
+    ### データ配置方法
+    以下のいずれかの方法でデータを用意してください：
+    
+    **方法1: dataフォルダに配置**
+    ```
+    data/
+    ├── salary_2023&2024&2025.csv
+    ├── stats_2023.csv
+    ├── stats_2024.csv
+    ├── stats_2025.csv
+    └── titles_2023&2024&2025.csv
+    ```
+    
+    **方法2: 左サイドバーから手動アップロード**
     
     ### 🚀 機能
     - ⚾ 選手個別の年俸予測
@@ -532,20 +542,4 @@ else:
 
 # フッター
 st.markdown("---")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+st.markdown("*NPB選手年俸予測システム - Powered by Streamlit*")
