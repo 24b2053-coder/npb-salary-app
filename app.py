@@ -40,11 +40,11 @@ salary_file = stats_2023_file = stats_2024_file = stats_2025_file = titles_file 
 
 try:
     salary_df = pd.read_csv('data/salary_2023&2024&2025.csv')
-    stats_2023 = pd.read_csv('data/stats_2023.csv)
+    stats_2023 = pd.read_csv('data/stats_2023.csv')
     stats_2024 = pd.read_csv('data/stats_2024.csv')
     stats_2025 = pd.read_csv('data/stats_2025.csv')
     titles_df = pd.read_csv('data/titles_2023&2024&2025.csv')
-    st.sidebar.success("✅ ローカルファイルから読み込み完了")
+    st.sidebar.success("✅ データ読み込み完了！")
 except:
     salary_file = st.sidebar.file_uploader("1. 年俸データ", type=['csv'])
     stats_2023_file = st.sidebar.file_uploader("2. 2023年成績", type=['csv'])
@@ -536,6 +536,7 @@ else:
 
 # フッター
 st.markdown("---")
+
 
 
 
