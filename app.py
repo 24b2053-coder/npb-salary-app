@@ -34,10 +34,6 @@ st.sidebar.header("📁 データアップロード")
 st.sidebar.markdown("以下の5つのCSVファイルをアップロードしてください：")
 
 # データ読み込み処理
-st.sidebar.markdown("アップロードがない場合は `data/` フォルダから自動読み込みします。")
-
-salary_file = stats_2023_file = stats_2024_file = stats_2025_file = titles_file = None
-
 try:
     salary_df = pd.read_csv('data/salary_2023&2024&2025.csv')
     stats_2023 = pd.read_csv('data/stats_2023.csv')
@@ -536,6 +532,7 @@ else:
 
 # フッター
 st.markdown("---")
+
 
 
 
