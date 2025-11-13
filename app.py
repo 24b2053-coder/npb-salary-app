@@ -279,12 +279,6 @@ if data_loaded:
                         selected_player = None
                 else:
                     st.info("👈 入力すると候補が表示されます")
-                    selected_player = st.selectbox(
-                        "または全選手から選択",
-                        options=sorted_players,
-                        index=0,
-                        key="all_players_select"
-                    )
         
         predict_year = st.slider("予測年度", 2024, 2026, 2025)
         
@@ -609,3 +603,4 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム - Powered by Streamlit*")
+
