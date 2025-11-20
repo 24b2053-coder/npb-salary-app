@@ -29,54 +29,6 @@ plt.rcParams["font.family"] = "IPAexGothic"
 st.title("⚾ NPB選手年俸予測システム")
 st.markdown("---")
 
-# データ読み込み処理
-data_loaded = False
-try:
-    salary_df = pd.read_csv('data/salary_2023&2024&2025.csv')
-    stats_2023 = pd.read_csv('data/stats_2023.csv')
-    stats_2024 = pd.read_csv('data/stats_2024.csv')
-    stats_2025 = pd.read_csv('data/stats_2025.csv')
-    titles_df = pd.read_csv('data/titles_2023&2024&2025.csv')
-    data_loaded = True
-except:
-    st.sidebar.markdown("**5つのCSVファイルを一度に選択してアップロード：**")
-    
-    uploaded_files = st.sidebar.file_uploader(
-        "CSVファイルを選択（5つ全て選択してください）",
-        type=['csv'],
-        accept_multiple_files=True
-    )
-    
-    if uploaded_files and len(uploaded_files) == 5:
-        # ファイル名から自動判別
-        file_dict = {}
-        for file in uploaded_files:
-            if 'salary' in file.name or '年俸' in file.name:
-                file_dict['salary'] = file
-            elif 'titles' in file.name or 'タイトル' in file.name:
-                file_dict['titles'] = file
-            elif '2023' in file.name:
-                file_dict['stats_2023'] = file
-            elif '2024' in file.name:
-                file_dict['stats_2024'] = file
-            elif '2025' in file.name:
-                file_dict['stats_2025'] = file
-        
-        # 全ファイルが揃っているか確認
-        if len(file_dict) == 5:
-            salary_df = pd.read_csv(file_dict['salary'])
-            stats_2023 = pd.read_csv(file_dict['stats_2023'])
-            stats_2024 = pd.read_csv(file_dict['stats_2024'])
-            stats_2025 = pd.read_csv(file_dict['stats_2025'])
-            titles_df = pd.read_csv(file_dict['titles'])
-            st.sidebar.success("✅ データ読み込み完了！")
-            data_loaded = True
-        else:
-            st.sidebar.error("❌ ファイル名が正しくありません。以下の名前を含むファイルが必要です：")
-            st.sidebar.markdown("- salary または 年俸\n- titles または タイトル\n- 2023\n- 2024\n- 2025")
-    elif uploaded_files:
-        st.sidebar.warning(f"⚠️ {len(uploaded_files)}個のファイルが選択されています。5つ必要です。")
-
 # セッション状態の初期化
 if 'best_model' not in st.session_state:
     st.session_state.model_trained = False
@@ -598,6 +550,7 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム - Powered by Streamlit*")
+
 
 
 
