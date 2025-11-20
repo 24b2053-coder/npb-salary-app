@@ -29,6 +29,21 @@ plt.rcParams["font.family"] = "IPAexGothic"
 st.title("⚾ NPB選手年俸予測システム")
 st.markdown("---")
 
+# 全ファイルが揃っているか確認
+        if len(file_dict) == 5:
+            salary_df = pd.read_csv(file_dict['salary'])
+            stats_2023 = pd.read_csv(file_dict['stats_2023'])
+            stats_2024 = pd.read_csv(file_dict['stats_2024'])
+            stats_2025 = pd.read_csv(file_dict['stats_2025'])
+            titles_df = pd.read_csv(file_dict['titles'])
+            st.sidebar.success("✅ データ読み込み完了！")
+            data_loaded = True
+        else:
+            st.sidebar.error("❌ ファイル名が正しくありません。以下の名前を含むファイルが必要です：")
+            st.sidebar.markdown("- salary または 年俸\n- titles または タイトル\n- 2023\n- 2024\n- 2025")
+    elif uploaded_files:
+        st.sidebar.warning(f"⚠️ {len(uploaded_files)}個のファイルが選択されています。5つ必要です。")
+
 # セッション状態の初期化
 if 'best_model' not in st.session_state:
     st.session_state.model_trained = False
@@ -550,6 +565,7 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム - Powered by Streamlit*")
+
 
 
 
