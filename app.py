@@ -43,27 +43,6 @@ st.markdown("""
     margin: 0 !important;
 }
 
-/* サイドバー内のテキスト色を白に */
-[data-testid="stSidebar"] .stMarkdown,
-[data-testid="stSidebar"] label,
-[data-testid="stSidebar"] p,
-[data-testid="stSidebar"] h1,
-[data-testid="stSidebar"] h2,
-[data-testid="stSidebar"] h3 {
-    color: #ffffff !important;
-}
-
-/* ラジオボタンのテキスト色 */
-[data-testid="stSidebar"] .stRadio label {
-    color: linear-gradient(180deg, #4a1e5f 0%, #6d2c8d 100%) !important;
-}
-
-/* ホバー時の背景色 */
-[data-testid="stSidebar"] .stRadio label:hover {
-    background: linear-gradient(180deg, #1a1a1a 0%, #2d2d2d 100%) !important;
-    border-radius: 5px;
-}
-
 /* サイドバー内の最初の要素の上余白を削除 */
 [data-testid="stSidebarContent"] > div:first-child {
     margin-top: 0 !important;
@@ -795,5 +774,6 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム - Powered by Streamlit*")
+
 
 
