@@ -29,9 +29,6 @@ plt.rcParams["font.family"] = "IPAexGothic"
 st.title("⚾ NPB選手年俸予測システム")
 st.markdown("---")
 
-# サイドバー
-
-
 # データ読み込み処理
 data_loaded = False
 try:
@@ -601,6 +598,7 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム - Powered by Streamlit*")
+
 
 
 
