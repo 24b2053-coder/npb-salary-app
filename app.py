@@ -95,6 +95,22 @@ h1::before, h2::before, h3::before, h4::before, h5::before, h6::before {
     display: none !important;
 }
 
+/* ====== 見出しのアンカーリンクを完全に非表示 ====== */
+h1 a, h2 a, h3 a, h4 a, h5 a, h6 a {
+    display: none !important;
+    pointer-events: none !important;
+}
+
+/* Streamlitの見出しアンカー */
+[data-testid="stHeaderActionElements"] {
+    display: none !important;
+}
+
+/* 見出しのホバー時のリンク表示も消す */
+h1:hover a, h2:hover a, h3:hover a, h4:hover a, h5:hover a, h6:hover a {
+    display: none !important;
+}
+
 /* ====== スマホ対応 ====== */
 @media (max-width: 900px) {
     [data-testid="stSidebar"] {
