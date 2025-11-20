@@ -30,7 +30,7 @@ st.title("⚾ NPB選手年俸予測システム")
 st.markdown("---")
 
 # サイドバー
-st.sidebar.header("📁 データ読み込み")
+
 
 # データ読み込み処理
 data_loaded = False
@@ -601,6 +601,7 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム - Powered by Streamlit*")
+
 
 
 
