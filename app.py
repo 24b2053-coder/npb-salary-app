@@ -215,8 +215,6 @@ if data_loaded:
             st.session_state.salary_long = salary_long
             st.session_state.results = results
             st.session_state.ml_df = ml_df
-            
-        st.sidebar.success(f"✅ モデル訓練完了\n採用: {best_model_name}")
     
     # メインコンテンツ
     st.sidebar.markdown("---")
@@ -604,3 +602,4 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム - Powered by Streamlit*")
+
