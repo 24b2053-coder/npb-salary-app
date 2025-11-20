@@ -37,7 +37,6 @@ try:
     stats_2024 = pd.read_csv('data/stats_2024.csv')
     stats_2025 = pd.read_csv('data/stats_2025.csv')
     titles_df = pd.read_csv('data/titles_2023&2024&2025.csv')
-    st.sidebar.success("✅ データ読み込み完了！")
     data_loaded = True
 except:
     st.sidebar.markdown("**5つのCSVファイルを一度に選択してアップロード：**")
@@ -599,6 +598,7 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム - Powered by Streamlit*")
+
 
 
 
