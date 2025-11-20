@@ -312,7 +312,7 @@ if data_loaded:
             st.session_state.ml_df = ml_df
     
     # メインコンテンツ
-    st.sidebar.markdown("---")
+    #st.sidebar.markdown("---")
     st.sidebar.markdown("### 🎯 機能選択")
     menu = st.sidebar.radio(
         "メニュー",
@@ -715,6 +715,7 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム - Powered by Streamlit*")
+
 
 
 
