@@ -55,12 +55,12 @@ st.markdown("""
 
 /* ラジオボタンのテキスト色 */
 [data-testid="stSidebar"] .stRadio label {
-    color: #ffffff !important;
+    color: linear-gradient(180deg, #4a1e5f 0%, #6d2c8d 100%) !important;
 }
 
 /* ホバー時の背景色 */
 [data-testid="stSidebar"] .stRadio label:hover {
-    background-color: rgba(255, 255, 255, 0.1) !important;
+    background: linear-gradient(180deg, #1a1a1a 0%, #2d2d2d 100%) !important;
     border-radius: 5px;
 }
 
@@ -795,4 +795,5 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム - Powered by Streamlit*")
+
 
