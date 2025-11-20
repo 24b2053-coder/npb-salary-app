@@ -34,7 +34,7 @@ st.markdown("""
     margin: 0 !important;
     z-index: 1000000;
     overflow: hidden;
-    border-radius: 30px;
+    border-radius: 30px 30px 30px 0;
 }
 
 /* サイドバーのユーザーコンテンツエリア */
@@ -787,6 +787,7 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム - Powered by Streamlit*")
+
 
 
 
