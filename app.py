@@ -30,7 +30,7 @@ st.markdown("""
     height: 100vh !important;
     background-color: #ffffff !important;
     border-right: 1px solid #e0e0e0;
-    padding: 1rem;
+    padding: 0.5rem 1rem !important;  /* 上部パディングを削減 */
     z-index: 1000;
     overflow: hidden;
 }
@@ -38,8 +38,10 @@ st.markdown("""
 /* スクロールコンテンツ */
 [data-testid="stSidebarContent"] {
     overflow-y: auto !important;
-    height: calc(100vh - 2rem) !important;
+    height: calc(100vh - 1rem) !important;  /* 高さも調整 */
     padding-right: 0.5rem;
+    padding-top: 0 !important;  /* 上部余白をゼロに */
+    margin-top: 0 !important;
 }
 
 /* サイドバー内のカーソルを標準化 */
