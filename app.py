@@ -553,7 +553,6 @@ if data_loaded:
                 if results_list:
                     df_results = pd.DataFrame(results_list)
                     
-                    # 比較表示（use_container_widthをFalseに変更して固定幅に）
                     st.dataframe(
                         df_results,
                         use_container_width=False,
@@ -601,4 +600,128 @@ if data_loaded:
         for name, result in st.session_state.results.items():
             model_data.append({
                 'モデル': name,
-                'MAE（百万円）': f"{result['MAE']/1
+                'MAE（百万円）': f"{result['MAE']/1e6:.2f}",
+                'R²スコア': f"{result['R2']:.4f}"
+            })
+        
+        df_models = pd.DataFrame(model_data).sort_values('R²スコア', ascending=False)
+        st.dataframe(
+            df_models,
+            use_container_width=False,
+            hide_index=True
+        )
+        st.success(f"🏆 最良モデル: {st.session_state.best_model_name}")
+        
+        if st.session_state.best_model_name == 'ランダムフォレスト':
+            st.markdown("---")
+            st.subheader("特徴量重要度 Top 10")
+            
+            feature_importance = pd.DataFrame({
+                '特徴量': st.session_state.feature_cols,
+                '重要度': st.session_state.best_model.feature_importances_
+            }).sort_values('重要度', ascending=False).head(10)
+            
+            fig, ax = plt.subplots(figsize=(10, 6))
+            ax.barh(range(len(feature_importance)), feature_importance['重要度'], color='#9b59b6', alpha=0.7)
+            ax.set_yticks(range(len(feature_importance)))
+            ax.set_yticklabels(feature_importance['特徴量'])
+            ax.set_xlabel('重要度', fontweight='bold')
+            ax.set_title('特徴量重要度 Top 10', fontweight='bold')
+            ax.grid(axis='x', alpha=0.3)
+            ax.invert_yaxis()
+            st.pyplot(fig)
+            plt.close(fig)
+    
+    # 要因分析
+    elif menu == "📉 要因分析":
+        st.header("📉 要因分析")
+        
+        st.subheader("タイトル獲得の影響")
+        title_groups = st.session_state.ml_df.groupby(
+            st.session_state.ml_df['タイトル数'] > 0
+        )['年俸_円'].agg(['count', 'mean', 'median'])
+        
+        title_groups['mean'] = title_groups['mean'] / 1e6
+        title_groups['median'] = title_groups['median'] / 1e6
+        title_groups.index = ['タイトル無し', 'タイトル有り']
+        title_groups.columns = ['選手数', '平均年俸（百万円）', '中央値（百万円）']
+        
+        st.dataframe(
+            title_groups,
+            use_container_width=False
+        )
+        
+        if len(title_groups) == 2:
+            diff = title_groups.loc['タイトル有り', '平均年俸（百万円）'] - title_groups.loc['タイトル無し', '平均年俸（百万円）']
+            st.metric("タイトル獲得による年俸増加", f"{diff:.1f}百万円")
+        
+        st.markdown("---")
+        st.subheader("主要指標との相関")
+        
+        correlations = st.session_state.ml_df[
+            ['打率', '本塁打', '打点', '出塁率', '長打率', 'タイトル数', '年俸_円']
+        ].corr()['年俸_円'].sort_values(ascending=False)
+        
+        corr_data = []
+        for idx, val in correlations.items():
+            if idx != '年俸_円':
+                corr_data.append({'指標': idx, '相関係数': f"{val:.4f}"})
+        
+        st.dataframe(
+            pd.DataFrame(corr_data),
+            use_container_width=False,
+            hide_index=True
+        )
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            fig1, ax1 = plt.subplots(figsize=(8, 5))
+            ax1.scatter(st.session_state.ml_df['打率'], st.session_state.ml_df['年俸_円']/1e6, alpha=0.5)
+            ax1.set_xlabel('打率', fontweight='bold')
+            ax1.set_ylabel('年俸（百万円）', fontweight='bold')
+            ax1.set_title('打率と年俸の関係', fontweight='bold')
+            ax1.grid(alpha=0.3)
+            st.pyplot(fig1)
+            plt.close(fig1)
+        
+        with col2:
+            fig2, ax2 = plt.subplots(figsize=(8, 5))
+            ax2.scatter(st.session_state.ml_df['本塁打'], st.session_state.ml_df['年俸_円']/1e6, alpha=0.5, color='orange')
+            ax2.set_xlabel('本塁打', fontweight='bold')
+            ax2.set_ylabel('年俸（百万円）', fontweight='bold')
+            ax2.set_title('本塁打と年俸の関係', fontweight='bold')
+            ax2.grid(alpha=0.3)
+            st.pyplot(fig2)
+            plt.close(fig2)
+
+else:
+    # ファイル未アップロード時
+    st.info("📁 CSVファイルが見つかりませんでした")
+    st.markdown("""
+    ### データ配置方法
+    
+    以下のいずれかの方法でデータを用意してください：
+    
+    **方法1: dataフォルダに配置**
+    ```
+    data/
+    ├── salary_2023&2024&2025.csv
+    ├── stats_2023.csv
+    ├── stats_2024.csv
+    ├── stats_2025.csv
+    └── titles_2023&2024&2025.csv
+    ```
+    
+    **方法2: 左サイドバーから手動アップロード**
+    
+    ### 🚀 機能
+    - ⚾ 選手個別の年俸予測
+    - 📊 複数選手の比較分析
+    - 📈 予測モデルの性能評価
+    - 📉 年俸影響要因の分析
+    """)
+
+# フッター
+st.markdown("---")
+st.markdown("*NPB選手年俸予測システム - Powered by Streamlit*")
