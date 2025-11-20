@@ -40,7 +40,6 @@ try:
     stats_2024 = pd.read_csv('data/stats_2024.csv')
     stats_2025 = pd.read_csv('data/stats_2025.csv')
     titles_df = pd.read_csv('data/titles_2023&2024&2025.csv')
-    st.sidebar.success("✅ データ読み込み完了！")
     data_loaded = True
 except:
     st.sidebar.markdown("**5つのCSVファイルを一度に選択してアップロード：**")
@@ -193,8 +192,7 @@ if data_loaded:
             st.session_state.salary_long = salary_long
             st.session_state.results = results
             st.session_state.ml_df = ml_df
-            
-            st.sidebar.success(f"✅ モデル訓練完了！\n採用モデル: {best_model_name}")
+        
     
     # メインコンテンツ
     st.sidebar.markdown("---")
@@ -603,5 +601,6 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム - Powered by Streamlit*")
+
 
 
