@@ -57,7 +57,7 @@ st.markdown("""
 
 /* ====== 表（テーブル）の揺れ対策 ====== */
 .stDataFrame, .stTable {
-    width: 100% !important;
+    max-width: 100% !important;
 }
 
 table {
@@ -715,6 +715,7 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム - Powered by Streamlit*")
+
 
 
 
