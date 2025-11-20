@@ -201,7 +201,8 @@ if data_loaded:
     st.sidebar.header("🎯 機能選択")
     menu = st.sidebar.radio(
         "メニュー",
-        ["🏠 ホーム", "🔍 選手検索・予測", "📊 複数選手比較", "📈 モデル性能", "📉 要因分析"]
+        ["🏠 ホーム", "🔍 選手検索・予測", "📊 複数選手比較", "📈 モデル性能", "📉 要因分析"],
+        key="main_menu"
     )
     
     # ホーム
@@ -238,51 +239,50 @@ if data_loaded:
         ]['選手名'].unique()
         sorted_players = sorted(available_players)
         
-        # 検索方法の選択
+        # 検索方法の選択（キーを追加して安定化）
         search_method = st.radio(
             "選手の選択方法",
             ["📋 リストから選択", "🔍 名前で検索"],
-            horizontal=True
+            horizontal=True,
+            key="search_method_radio"
         )
+        
+        selected_player = None
         
         if search_method == "📋 リストから選択":
             selected_player = st.selectbox(
                 "選手を選択してください",
                 options=sorted_players,
-                index=0
+                index=0,
+                key="player_list_select"
             )
         else:
-            col1, col2 = st.columns([2, 3])
+            # 検索入力
+            search_text = st.text_input(
+                "選手名を入力",
+                placeholder="例: 村上、山田、大谷",
+                key="player_search_input"
+            )
             
-            with col1:
-                # テキスト入力
-                search_text = st.text_input(
-                    "選手名を入力",
-                    placeholder="例: 村上、山田、大谷",
-                    key="player_search"
-                )
-            
-            with col2:
-                # リアルタイムで絞り込んだ候補を表示
-                if search_text:
-                    matches = [p for p in sorted_players if search_text in p]
-                    
-                    if matches:
-                        selected_player = st.selectbox(
-                            f"候補 ({len(matches)}人)",
-                            options=matches,
-                            index=0,
-                            key="filtered_player_select"
-                        )
-                    else:
-                        st.warning("該当なし")
-                        selected_player = None
+            # 検索結果表示
+            if search_text:
+                matches = [p for p in sorted_players if search_text in p]
+                
+                if matches:
+                    selected_player = st.selectbox(
+                        f"候補 ({len(matches)}人)",
+                        options=matches,
+                        index=0,
+                        key="filtered_player_select"
+                    )
                 else:
-                    st.info("👈 入力すると候補が表示されます")
+                    st.warning("該当する選手が見つかりません")
+            else:
+                st.info("👈 選手名を入力すると候補が表示されます")
         
-        predict_year = st.slider("予測年度", 2024, 2026, 2025)
+        predict_year = st.slider("予測年度", 2024, 2026, 2025, key="predict_year_slider")
         
-        if st.button("🎯 予測実行", type="primary"):
+        if st.button("🎯 予測実行", type="primary", key="predict_button"):
             if not selected_player:
                 st.error("❌ 選手を選択してください")
             else:
@@ -291,113 +291,117 @@ if data_loaded:
                     (st.session_state.stats_all_with_titles['選手名'] == selected_player) & 
                     (st.session_state.stats_all_with_titles['年度'] == stats_year)
                 ]
-            
-            if not player_stats.empty:
-                player_stats = player_stats.iloc[0]
-                features = player_stats[st.session_state.feature_cols].values.reshape(1, -1)
                 
-                if st.session_state.best_model_name == '線形回帰':
-                    features_scaled = st.session_state.scaler.transform(features)
-                    predicted_salary = st.session_state.best_model.predict(features_scaled)[0]
+                if player_stats.empty:
+                    st.error(f"❌ {selected_player}の{stats_year}年のデータが見つかりません")
                 else:
-                    predicted_salary = st.session_state.best_model.predict(features)[0]
-                
-                # 実際の年俸取得
-                actual_salary_data = st.session_state.salary_long[
-                    (st.session_state.salary_long['選手名'] == selected_player) & 
-                    (st.session_state.salary_long['年度'] == predict_year)
-                ]
-                actual_salary = actual_salary_data['年俸_円'].values[0] if not actual_salary_data.empty else None
-                
-                # 結果表示
-                st.success(f"✅ 予測完了！")
-                
-                col1, col2, col3 = st.columns(3)
-                with col1:
-                    st.metric("予測年俸", f"{predicted_salary/1e6:.1f}百万円")
-                with col2:
-                    if actual_salary:
-                        st.metric("実際の年俸", f"{actual_salary/1e6:.1f}百万円")
+                    player_stats = player_stats.iloc[0]
+                    features = player_stats[st.session_state.feature_cols].values.reshape(1, -1)
+                    
+                    if st.session_state.best_model_name == '線形回帰':
+                        features_scaled = st.session_state.scaler.transform(features)
+                        predicted_salary = st.session_state.best_model.predict(features_scaled)[0]
                     else:
-                        st.metric("実際の年俸", "データなし")
-                with col3:
-                    if actual_salary:
-                        error = abs(predicted_salary - actual_salary) / actual_salary * 100
-                        st.metric("予測誤差", f"{error:.1f}%")
-                
-                # 成績表示
-                st.markdown("---")
-                st.subheader(f"{stats_year}年の成績")
-                col1, col2, col3, col4 = st.columns(4)
-                with col1:
-                    st.metric("試合", int(player_stats['試合']))
-                    st.metric("打率", f"{player_stats['打率']:.3f}")
-                with col2:
-                    st.metric("安打", int(player_stats['安打']))
-                    st.metric("出塁率", f"{player_stats['出塁率']:.3f}")
-                with col3:
-                    st.metric("本塁打", int(player_stats['本塁打']))
-                    st.metric("長打率", f"{player_stats['長打率']:.3f}")
-                with col4:
-                    st.metric("打点", int(player_stats['打点']))
-                    st.metric("タイトル数", int(player_stats['タイトル数']))
-                
-                # グラフ表示
-                st.markdown("---")
-                col1, col2 = st.columns(2)
-                
-                with col1:
-                    # 年俸推移
-                    fig1, ax1 = plt.subplots(figsize=(8, 5))
-                    player_salary_history = st.session_state.salary_long[
-                        st.session_state.salary_long['選手名'] == selected_player
-                    ].sort_values('年度')
+                        predicted_salary = st.session_state.best_model.predict(features)[0]
                     
-                    if not player_salary_history.empty:
-                        years = player_salary_history['年度'].values
-                        salaries = player_salary_history['年俸_円'].values / 1e6
-                        
-                        ax1.plot(years, salaries, 'o-', linewidth=2, markersize=8, label='実際の年俸')
-                        ax1.plot(predict_year, predicted_salary/1e6, 'r*', markersize=20, label='予測年俸')
-                        
+                    # 実際の年俸取得
+                    actual_salary_data = st.session_state.salary_long[
+                        (st.session_state.salary_long['選手名'] == selected_player) & 
+                        (st.session_state.salary_long['年度'] == predict_year)
+                    ]
+                    actual_salary = actual_salary_data['年俸_円'].values[0] if not actual_salary_data.empty else None
+                    
+                    # 結果表示
+                    st.success(f"✅ 予測完了！")
+                    
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric("予測年俸", f"{predicted_salary/1e6:.1f}百万円")
+                    with col2:
                         if actual_salary:
-                            ax1.plot(predict_year, actual_salary/1e6, 'go', markersize=12, label='実際の年俸(2025)')
+                            st.metric("実際の年俸", f"{actual_salary/1e6:.1f}百万円")
+                        else:
+                            st.metric("実際の年俸", "データなし")
+                    with col3:
+                        if actual_salary:
+                            error = abs(predicted_salary - actual_salary) / actual_salary * 100
+                            st.metric("予測誤差", f"{error:.1f}%")
                     
-                    ax1.set_xlabel('年度', fontweight='bold')
-                    ax1.set_ylabel('年俸（百万円）', fontweight='bold')
-                    ax1.set_title(f'{selected_player} - 年俸推移', fontweight='bold')
-                    ax1.grid(alpha=0.3)
-                    ax1.legend()
-                    st.pyplot(fig1)
-                
-                with col2:
-                    # レーダーチャート
-                    fig2, ax2 = plt.subplots(figsize=(8, 5), subplot_kw=dict(projection='polar'))
+                    # 成績表示
+                    st.markdown("---")
+                    st.subheader(f"{stats_year}年の成績")
+                    col1, col2, col3, col4 = st.columns(4)
+                    with col1:
+                        st.metric("試合", int(player_stats['試合']))
+                        st.metric("打率", f"{player_stats['打率']:.3f}")
+                    with col2:
+                        st.metric("安打", int(player_stats['安打']))
+                        st.metric("出塁率", f"{player_stats['出塁率']:.3f}")
+                    with col3:
+                        st.metric("本塁打", int(player_stats['本塁打']))
+                        st.metric("長打率", f"{player_stats['長打率']:.3f}")
+                    with col4:
+                        st.metric("打点", int(player_stats['打点']))
+                        st.metric("タイトル数", int(player_stats['タイトル数']))
                     
-                    radar_stats = {
-                        '打率': player_stats['打率'] / 0.4,
-                        '出塁率': player_stats['出塁率'] / 0.5,
-                        '長打率': player_stats['長打率'] / 0.7,
-                        '本塁打': min(player_stats['本塁打'] / 40, 1.0),
-                        '打点': min(player_stats['打点'] / 100, 1.0),
-                        '盗塁': min(player_stats['盗塁'] / 40, 1.0),
-                    }
+                    # グラフ表示
+                    st.markdown("---")
+                    col1, col2 = st.columns(2)
                     
-                    categories = list(radar_stats.keys())
-                    values = list(radar_stats.values())
-                    values += values[:1]
+                    with col1:
+                        # 年俸推移
+                        fig1, ax1 = plt.subplots(figsize=(8, 5))
+                        player_salary_history = st.session_state.salary_long[
+                            st.session_state.salary_long['選手名'] == selected_player
+                        ].sort_values('年度')
+                        
+                        if not player_salary_history.empty:
+                            years = player_salary_history['年度'].values
+                            salaries = player_salary_history['年俸_円'].values / 1e6
+                            
+                            ax1.plot(years, salaries, 'o-', linewidth=2, markersize=8, label='実際の年俸')
+                            ax1.plot(predict_year, predicted_salary/1e6, 'r*', markersize=20, label='予測年俸')
+                            
+                            if actual_salary:
+                                ax1.plot(predict_year, actual_salary/1e6, 'go', markersize=12, label='実際の年俸(2025)')
+                        
+                        ax1.set_xlabel('年度', fontweight='bold')
+                        ax1.set_ylabel('年俸（百万円）', fontweight='bold')
+                        ax1.set_title(f'{selected_player} - 年俸推移', fontweight='bold')
+                        ax1.grid(alpha=0.3)
+                        ax1.legend()
+                        st.pyplot(fig1)
+                        plt.close(fig1)  # メモリリーク防止
                     
-                    angles = np.linspace(0, 2 * np.pi, len(categories), endpoint=False).tolist()
-                    angles += angles[:1]
-                    
-                    ax2.plot(angles, values, 'o-', linewidth=2, color='#2E86AB')
-                    ax2.fill(angles, values, alpha=0.25, color='#2E86AB')
-                    ax2.set_xticks(angles[:-1])
-                    ax2.set_xticklabels(categories)
-                    ax2.set_ylim(0, 1)
-                    ax2.set_title(f'{selected_player} - 成績レーダー\n({stats_year}年)', fontweight='bold', pad=20)
-                    ax2.grid(True)
-                    st.pyplot(fig2)
+                    with col2:
+                        # レーダーチャート
+                        fig2, ax2 = plt.subplots(figsize=(8, 5), subplot_kw=dict(projection='polar'))
+                        
+                        radar_stats = {
+                            '打率': player_stats['打率'] / 0.4,
+                            '出塁率': player_stats['出塁率'] / 0.5,
+                            '長打率': player_stats['長打率'] / 0.7,
+                            '本塁打': min(player_stats['本塁打'] / 40, 1.0),
+                            '打点': min(player_stats['打点'] / 100, 1.0),
+                            '盗塁': min(player_stats['盗塁'] / 40, 1.0),
+                        }
+                        
+                        categories = list(radar_stats.keys())
+                        values = list(radar_stats.values())
+                        values += values[:1]
+                        
+                        angles = np.linspace(0, 2 * np.pi, len(categories), endpoint=False).tolist()
+                        angles += angles[:1]
+                        
+                        ax2.plot(angles, values, 'o-', linewidth=2, color='#2E86AB')
+                        ax2.fill(angles, values, alpha=0.25, color='#2E86AB')
+                        ax2.set_xticks(angles[:-1])
+                        ax2.set_xticklabels(categories)
+                        ax2.set_ylim(0, 1)
+                        ax2.set_title(f'{selected_player} - 成績レーダー\n({stats_year}年)', fontweight='bold', pad=20)
+                        ax2.grid(True)
+                        st.pyplot(fig2)
+                        plt.close(fig2)  # メモリリーク防止
     
     # 複数選手比較
     elif menu == "📊 複数選手比較":
@@ -410,11 +414,12 @@ if data_loaded:
         selected_players = st.multiselect(
             "比較する選手を選択してください（最大5人）",
             options=sorted(available_players),
-            max_selections=5
+            max_selections=5,
+            key="compare_players_multiselect"
         )
         
         if len(selected_players) >= 2:
-            if st.button("📊 比較実行", type="primary"):
+            if st.button("📊 比較実行", type="primary", key="compare_button"):
                 results_list = []
                 
                 for player in selected_players:
@@ -458,6 +463,7 @@ if data_loaded:
                         ax1.set_title('予測年俸比較', fontweight='bold')
                         ax1.grid(axis='x', alpha=0.3)
                         st.pyplot(fig1)
+                        plt.close(fig1)
                     
                     with col2:
                         fig2, ax2 = plt.subplots(figsize=(8, 5))
@@ -476,6 +482,7 @@ if data_loaded:
                         ax2.legend()
                         ax2.grid(axis='y', alpha=0.3)
                         st.pyplot(fig2)
+                        plt.close(fig2)
         else:
             st.info("👆 2人以上の選手を選択してください")
     
@@ -516,6 +523,7 @@ if data_loaded:
             ax.grid(axis='x', alpha=0.3)
             ax.invert_yaxis()
             st.pyplot(fig)
+            plt.close(fig)
     
     # 要因分析
     elif menu == "📉 要因分析":
@@ -563,6 +571,7 @@ if data_loaded:
             ax1.set_title('打率と年俸の関係', fontweight='bold')
             ax1.grid(alpha=0.3)
             st.pyplot(fig1)
+            plt.close(fig1)
         
         with col2:
             fig2, ax2 = plt.subplots(figsize=(8, 5))
@@ -572,6 +581,7 @@ if data_loaded:
             ax2.set_title('本塁打と年俸の関係', fontweight='bold')
             ax2.grid(alpha=0.3)
             st.pyplot(fig2)
+            plt.close(fig2)
 
 else:
     # ファイル未アップロード時
@@ -603,4 +613,3 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム - Powered by Streamlit*")
-
