@@ -16,7 +16,7 @@ st.set_page_config(
     page_title="NPB選手年俸予測システム",
     page_icon="⚾",
     layout="centered",
-    initial_sidebar_state="expanded"
+    #initial_sidebar_state="expanded"
 )
 
 st.markdown("""
@@ -37,11 +37,11 @@ st.markdown("""
 }
 
 /* スクロールコンテンツ */
-/*[data-testid="stSidebarContent"] {
+[data-testid="stSidebarContent"] {
     overflow-y: auto !important;
     height: calc(100vh - 2rem) !important;
     padding-right: 0.5rem;
-}*/
+}
 
 /* ====== メインエリア ====== */
 /* ← ここがポイント：幅の「揺れ」を完全固定する */
@@ -715,6 +715,7 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム - Powered by Streamlit*")
+
 
 
 
