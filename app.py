@@ -82,7 +82,7 @@ except:
         st.sidebar.warning(f"⚠️ {len(uploaded_files)}個のファイルが選択されています。5つ必要です。")
 
 # セッション状態の初期化
-if 'model_trained' not in st.session_state:
+if 'best_model' not in st.session_state:
     st.session_state.model_trained = False
 
 # データ読み込みとモデル訓練
@@ -603,4 +603,5 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム - Powered by Streamlit*")
+
 
