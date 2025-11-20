@@ -429,7 +429,7 @@ if data_loaded:
         
         search_filter = st.text_input(
             "🔍 絞り込み検索（オプション）",
-            placeholder="例: 村上、山田、大谷",
+            placeholder="例: 村上、岡本、近藤",
             key="player_search_filter",
             help="選手名の一部を入力すると候補が絞り込まれます"
         )
@@ -786,6 +786,7 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム - Powered by Streamlit*")
+
 
 
 
