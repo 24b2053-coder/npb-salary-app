@@ -19,6 +19,77 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+st.markdown("""
+<style>
+
+/* ====== サイドバー固定 ====== */
+[data-testid="stSidebar"] {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    width: 280px !important;
+    height: 100vh !important;
+    background-color: #ffffff !important;
+    border-right: 1px solid #e0e0e0;
+    padding: 1rem;
+    z-index: 1000;
+    overflow: hidden;
+}
+
+/* スクロールコンテンツ */
+[data-testid="stSidebarContent"] {
+    overflow-y: auto !important;
+    height: calc(100vh - 2rem) !important;
+    padding-right: 0.5rem;
+}
+
+/* ====== メインエリア ====== */
+/* ← ここがポイント：幅の「揺れ」を完全固定する */
+.main {
+    margin-left: 280px !important;
+}
+
+/* メインの最大幅を固定（揺れ防止） */
+.block-container {
+    max-width: 1400px !important;   /* 広すぎず狭すぎない最適値 */
+    padding-top: 2rem !important;
+}
+
+/* ====== 表（テーブル）の揺れ対策 ====== */
+.stDataFrame, .stTable {
+    width: 100% !important;
+}
+
+table {
+    table-layout: fixed !important;   /* ←コレで揺れ完全停止 */
+    width: 100% !important;
+}
+
+thead tr th {
+    background-color: #f8f8f8 !important;
+}
+
+/* ====== スマホ対応 ====== */
+@media (max-width: 900px) {
+    [data-testid="stSidebar"] {
+        position: relative !important;
+        width: 100% !important;
+        height: auto !important;
+        border-right: none !important;
+    }
+    .main {
+        margin-left: 0 !important;
+    }
+    .block-container {
+        max-width: 100% !important;
+        padding: 1rem !important;
+    }
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+
 # CSSでアニメーションを無効化
 st.markdown("""
 <style>
@@ -644,4 +715,5 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム - Powered by Streamlit*")
+
 
