@@ -81,6 +81,20 @@ thead tr th {
     background-color: #f8f8f8 !important;
 }
 
+/* ====== 見出しの縦線（カーソル）を非表示 ====== */
+h1::before, h2::before, h3::before, h4::before, h5::before, h6::before {
+    content: none !important;
+    display: none !important;
+}
+
+/* Markdownの見出しも対象 */
+.element-container h1::before,
+.element-container h2::before,
+.element-container h3::before,
+.element-container h4::before {
+    display: none !important;
+}
+
 /* ====== スマホ対応 ====== */
 @media (max-width: 900px) {
     [data-testid="stSidebar"] {
