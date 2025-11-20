@@ -192,7 +192,7 @@ if data_loaded:
         
     
     # メインコンテンツ
-    st.sidebar.markdown("---")
+    #st.sidebar.markdown("---")
     st.sidebar.header("🎯 機能選択")
     menu = st.sidebar.radio(
         "メニュー",
@@ -598,6 +598,7 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム - Powered by Streamlit*")
+
 
 
 
