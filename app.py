@@ -61,6 +61,7 @@ st.markdown("""
     gap: 0.5rem !important;
     padding-top: 0 !important;
     margin-top: 0 !important;
+    background: linear-gradient(180deg, #1a1a1a 0%, #2d2d2d 100%) !important;
 }
 
 /* すべてのelement-container */
@@ -786,3 +787,4 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム - Powered by Streamlit*")
+
