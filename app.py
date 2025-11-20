@@ -87,9 +87,6 @@ plt.rcParams["font.family"] = "IPAexGothic"
 st.title("⚾ NPB選手年俸予測システム")
 st.markdown("---")
 
-# サイドバー
-st.sidebar.header("📁 データ読み込み")
-
 # データ読み込み処理
 data_loaded = False
 try:
@@ -98,7 +95,6 @@ try:
     stats_2024 = pd.read_csv('data/stats_2024.csv')
     stats_2025 = pd.read_csv('data/stats_2025.csv')
     titles_df = pd.read_csv('data/titles_2023&2024&2025.csv')
-    st.sidebar.success("✅ データ読み込み完了！")
     data_loaded = True
 except:
     st.sidebar.markdown("**5つのCSVファイルを一度に選択してアップロード：**")
@@ -131,7 +127,6 @@ except:
             stats_2024 = pd.read_csv(file_dict['stats_2024'])
             stats_2025 = pd.read_csv(file_dict['stats_2025'])
             titles_df = pd.read_csv(file_dict['titles'])
-            st.sidebar.success("✅ データ読み込み完了！")
             data_loaded = True
         else:
             st.sidebar.error("❌ ファイル名が正しくありません。以下の名前を含むファイルが必要です：")
@@ -659,3 +654,4 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム - Powered by Streamlit*")
+
