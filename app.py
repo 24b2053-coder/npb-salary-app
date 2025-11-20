@@ -30,16 +30,23 @@ st.markdown("""
     height: 100vh !important;
     background-color: #ffffff !important;
     border-right: 1px solid #e0e0e0;
-    padding: 0 !important;  /* 全パディングをゼロに */
+    padding: 0 !important;
+    margin: 0 !important;
     z-index: 1000;
     overflow: hidden;
+}
+
+/* サイドバーのユーザーコンテンツエリア */
+[data-testid="stSidebarUserContent"] {
+    padding-top: 0.5rem !important;  /* ここが重要！ */
+    margin-top: 0 !important;
 }
 
 /* スクロールコンテンツ */
 [data-testid="stSidebarContent"] {
     overflow-y: auto !important;
-    height: 100vh !important;  /* フル高さ */
-    padding: 1rem 1rem 1rem 1rem !important;  /* 上だけ削減 */
+    height: 100vh !important;
+    padding: 0 1rem 1rem 1rem !important;  /* 上パディング完全ゼロ */
     margin: 0 !important;
 }
 
@@ -49,13 +56,18 @@ st.markdown("""
     padding-top: 0 !important;
 }
 
-/* サイドバーのすべての子要素 */
+/* すべてのVerticalBlock */
 [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
     gap: 0.5rem !important;
     padding-top: 0 !important;
+    margin-top: 0 !important;
 }
 
-/* サイドバーのMarkdown要素 */
+/* すべてのelement-container */
+[data-testid="stSidebar"] .element-container {
+    margin-top: 0 !important;
+}
+
 [data-testid="stSidebar"] .element-container:first-child {
     margin-top: 0 !important;
     padding-top: 0 !important;
@@ -774,6 +786,3 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム - Powered by Streamlit*")
-
-
-
