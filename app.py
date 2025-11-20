@@ -74,9 +74,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# サイドバー
-st.sidebar.markdown("### 📁 データ読み込み")
-
 # 日本語フォント設定
 import matplotlib.pyplot as plt
 import japanize_matplotlib
@@ -654,4 +651,5 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム - Powered by Streamlit*")
+
 
