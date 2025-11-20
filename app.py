@@ -19,6 +19,30 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# CSSでアニメーションを無効化
+st.markdown("""
+<style>
+    /* データフレームの震えを防止 */
+    [data-testid="stDataFrame"] {
+        animation: none !important;
+        transition: none !important;
+    }
+    
+    /* テーブル全体の震えを防止 */
+    .stDataFrame {
+        animation: none !important;
+        transition: none !important;
+    }
+    
+    /* 全体的なアニメーション抑制 */
+    * {
+        animation-duration: 0s !important;
+        animation-delay: 0s !important;
+        transition-duration: 0s !important;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 # 日本語フォント設定
 try:
     import japanize_matplotlib
@@ -215,9 +239,11 @@ if data_loaded:
             st.session_state.salary_long = salary_long
             st.session_state.results = results
             st.session_state.ml_df = ml_df
+            
+        st.sidebar.success(f"✅ モデル訓練完了\n採用: {best_model_name}")
     
     # メインコンテンツ
-    #st.sidebar.markdown("---")
+    st.sidebar.markdown("---")
     st.sidebar.markdown("### 🎯 機能選択")
     menu = st.sidebar.radio(
         "メニュー",
@@ -446,7 +472,14 @@ if data_loaded:
                 
                 if results_list:
                     df_results = pd.DataFrame(results_list)
-                    st.dataframe(df_results, use_container_width=True)
+                    
+                    # 比較表示（use_container_widthをFalseに変更して固定幅に）
+                    st.dataframe(
+                        df_results,
+                        use_container_width=False,
+                        hide_index=True,
+                        height=None
+                    )
                     
                     col1, col2 = st.columns(2)
                     
@@ -493,7 +526,11 @@ if data_loaded:
             })
         
         df_models = pd.DataFrame(model_data).sort_values('R²スコア', ascending=False)
-        st.dataframe(df_models, use_container_width=True)
+        st.dataframe(
+            df_models,
+            use_container_width=False,
+            hide_index=True
+        )
         st.success(f"🏆 最良モデル: {st.session_state.best_model_name}")
         
         if st.session_state.best_model_name == 'ランダムフォレスト':
@@ -530,7 +567,10 @@ if data_loaded:
         title_groups.index = ['タイトル無し', 'タイトル有り']
         title_groups.columns = ['選手数', '平均年俸（百万円）', '中央値（百万円）']
         
-        st.dataframe(title_groups, use_container_width=True)
+        st.dataframe(
+            title_groups,
+            use_container_width=False
+        )
         
         if len(title_groups) == 2:
             diff = title_groups.loc['タイトル有り', '平均年俸（百万円）'] - title_groups.loc['タイトル無し', '平均年俸（百万円）']
@@ -548,7 +588,11 @@ if data_loaded:
             if idx != '年俸_円':
                 corr_data.append({'指標': idx, '相関係数': f"{val:.4f}"})
         
-        st.dataframe(pd.DataFrame(corr_data), use_container_width=True)
+        st.dataframe(
+            pd.DataFrame(corr_data),
+            use_container_width=False,
+            hide_index=True
+        )
         
         col1, col2 = st.columns(2)
         
@@ -602,5 +646,3 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム - Powered by Streamlit*")
-
-
