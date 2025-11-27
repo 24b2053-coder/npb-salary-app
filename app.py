@@ -5,9 +5,10 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LinearRegression, Ridge, Lasso
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from sklearn.model_selection import GridSearchCV
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -227,6 +228,10 @@ st.markdown("---")
 # セッション状態の初期化
 if 'model_trained' not in st.session_state:
     st.session_state.model_trained = False
+if 'auto_weight' not in st.session_state:
+    st.session_state.auto_weight = True
+if 'feature_weights' not in st.session_state:
+    st.session_state.feature_weights = {}
 
 # データ読み込み処理
 @st.cache_data
@@ -332,10 +337,26 @@ def prepare_data(_salary_df, _stats_2023, _stats_2024, _stats_2025, _titles_df):
     
     return merged_df, stats_all_with_titles, salary_long
 
-# モデル訓練関数（対数変換版）
-@st.cache_resource
-def train_models(_merged_df):
-    """モデルを訓練する（対数変換適用）"""
+# 自動重み付け関数
+def calculate_auto_weights(X, y):
+    """
+    Lasso回帰を使って自動的に特徴量の重要度（重み）を計算
+    """
+    # Lasso回帰で重要な特徴量を抽出
+    lasso = Lasso(alpha=0.01, random_state=42)
+    lasso.fit(X, y)
+    
+    # 係数の絶対値を重要度として使用
+    weights = np.abs(lasso.coef_)
+    
+    # 正規化（合計が1になるように）
+    weights = weights / np.sum(weights)
+    
+    return weights
+
+# モデル訓練関数（対数変換版 + 重み付け対応）
+def train_models(_merged_df, use_auto_weight=True, manual_weights=None):
+    """モデルを訓練する（対数変換適用 + 重み付け）"""
     feature_cols = ['試合', '打席', '打数', '得点', '安打', '二塁打', '三塁打', '本塁打', 
                    '塁打', '打点', '盗塁', '盗塁刺', '四球', '死球', '三振', '併殺打', 
                    '打率', '出塁率', '長打率', '犠打', '犠飛', 'タイトル数']
@@ -348,8 +369,25 @@ def train_models(_merged_df):
     
     y_log = np.log1p(y)
     
+    # 重み付けの適用
+    if use_auto_weight:
+        # 自動重み付け
+        weights = calculate_auto_weights(X, y_log)
+        feature_weights = dict(zip(feature_cols, weights))
+        X_weighted = X * weights
+    elif manual_weights is not None:
+        # 手動重み付け
+        weights = np.array([manual_weights.get(col, 1.0) for col in feature_cols])
+        weights = weights / np.sum(weights)  # 正規化
+        feature_weights = dict(zip(feature_cols, weights))
+        X_weighted = X * weights
+    else:
+        # 重み付けなし
+        X_weighted = X.copy()
+        feature_weights = dict(zip(feature_cols, [1.0/len(feature_cols)] * len(feature_cols)))
+    
     X_train, X_test, y_train_log, y_test_log = train_test_split(
-        X, y_log, test_size=0.2, random_state=42
+        X_weighted, y_log, test_size=0.2, random_state=42
     )
     
     y_train_original = np.expm1(y_train_log)
@@ -361,13 +399,14 @@ def train_models(_merged_df):
     
     models = {
         '線形回帰': LinearRegression(),
+        'Ridge回帰': Ridge(alpha=1.0, random_state=42),
         'ランダムフォレスト': RandomForestRegressor(n_estimators=100, random_state=42, max_depth=10),
         '勾配ブースティング': GradientBoostingRegressor(n_estimators=100, random_state=42, max_depth=5)
     }
     
     results = {}
     for name, model in models.items():
-        if name == '線形回帰':
+        if 'Ridge' in name or '線形回帰' in name:
             model.fit(X_train_scaled, y_train_log)
             y_pred_log = model.predict(X_test_scaled)
         else:
@@ -388,17 +427,63 @@ def train_models(_merged_df):
     best_model_name = max(results.items(), key=lambda x: x[1]['R2'])[0]
     best_model = results[best_model_name]['model']
     
-    return best_model, best_model_name, scaler, feature_cols, results, ml_df
+    return best_model, best_model_name, scaler, feature_cols, results, ml_df, feature_weights
 
 # データ読み込みとモデル訓練
 if data_loaded:
-    if not st.session_state.model_trained:
+    # サイドバーに重み付け設定を追加
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("### ⚙️ 重み付け設定")
+    
+    weight_mode = st.sidebar.radio(
+        "重み付けモード",
+        ["自動最適化", "手動調整", "重み付けなし"],
+        key="weight_mode",
+        help="自動最適化: Lasso回帰で自動的に重要な特徴量を抽出\n手動調整: 各特徴量の重要度を手動で設定"
+    )
+    
+    use_auto_weight = (weight_mode == "自動最適化")
+    use_manual_weight = (weight_mode == "手動調整")
+    
+    manual_weights = None
+    if use_manual_weight:
+        st.sidebar.markdown("#### 特徴量の重み調整")
+        st.sidebar.markdown("*重要度が高い項目の値を大きくしてください*")
+        
+        # 主要な特徴量のみ手動調整可能に
+        key_features = ['打率', '本塁打', '打点', '出塁率', '長打率', 'タイトル数', '安打', '試合']
+        manual_weights = {}
+        
+        for feature in key_features:
+            manual_weights[feature] = st.sidebar.slider(
+                feature,
+                min_value=0.0,
+                max_value=5.0,
+                value=1.0,
+                step=0.1,
+                key=f"weight_{feature}"
+            )
+    
+    # モデル訓練フラグの変更検知
+    weight_changed = False
+    if 'last_weight_mode' not in st.session_state:
+        st.session_state.last_weight_mode = weight_mode
+        weight_changed = True
+    elif st.session_state.last_weight_mode != weight_mode:
+        st.session_state.last_weight_mode = weight_mode
+        weight_changed = True
+    
+    if not st.session_state.model_trained or weight_changed:
         with st.spinner('🤖 モデルを訓練中...'):
             merged_df, stats_all_with_titles, salary_long = prepare_data(
                 salary_df, stats_2023, stats_2024, stats_2025, titles_df
             )
             
-            best_model, best_model_name, scaler, feature_cols, results, ml_df = train_models(merged_df)
+            best_model, best_model_name, scaler, feature_cols, results, ml_df, feature_weights = train_models(
+                merged_df, 
+                use_auto_weight=use_auto_weight,
+                manual_weights=manual_weights if use_manual_weight else None
+            )
             
             st.session_state.model_trained = True
             st.session_state.best_model = best_model
@@ -409,19 +494,22 @@ if data_loaded:
             st.session_state.salary_long = salary_long
             st.session_state.results = results
             st.session_state.ml_df = ml_df
+            st.session_state.feature_weights = feature_weights
+            st.session_state.weight_mode = weight_mode
     
     # メインコンテンツ
+    st.sidebar.markdown("---")
     st.sidebar.markdown("### 🎯 機能選択")
     menu = st.sidebar.radio(
         "メニュー",
-        ["🏠 ホーム", "🔍 選手検索・予測", "📊 複数選手比較", "📈 モデル性能", "📉 要因分析"],
+        ["🏠 ホーム", "🔍 選手検索・予測", "📊 複数選手比較", "📈 モデル性能", "📉 要因分析", "⚖️ 重み付け詳細"],
         key="main_menu",
         label_visibility="collapsed"
     )
     
     # ホーム
     if menu == "🏠 ホーム":
-        col1, col2, col3 = st.columns(3)
+        col1, col2, col3 = st.columns([2, 3, 2])
         with col1:
             st.metric("訓練データ数", f"{len(st.session_state.ml_df)}人")
         with col2:
@@ -429,10 +517,14 @@ if data_loaded:
         with col3:
             st.metric("R²スコア", f"{st.session_state.results[st.session_state.best_model_name]['R2']:.4f}")
         
-        st.markdown("---")
-        st.info("📊 **改良版**: 年俸を対数変換してから予測し、元のスケールに戻すことで予測精度が向上しました")
+        # 現在の重み付けモードを表示
+        if st.session_state.weight_mode == "自動最適化":
+            st.info("🤖 **重み付けモード**: 自動最適化（Lasso回帰による特徴量選択）")
+        elif st.session_state.weight_mode == "手動調整":
+            st.info("✋ **重み付けモード**: 手動調整")
+        else:
+            st.info("📊 **重み付けモード**: 重み付けなし（全特徴量を均等に使用）")
         
-        st.markdown("---")
         st.subheader("📖 使い方")
         st.markdown("""
         1. **左サイドバー**のメニューから機能を選択
@@ -443,6 +535,12 @@ if data_loaded:
         - 📊 **複数選手比較**: 最大5人の選手を比較
         - 📈 **モデル性能**: 予測モデルの詳細情報
         - 📉 **要因分析**: 年俸に影響を与える要因の分析
+        - ⚖️ **重み付け詳細**: 各特徴量の重要度を確認
+        
+        ### 🎯 重み付け機能
+        - **自動最適化**: Lasso回帰で自動的に重要な特徴量を抽出
+        - **手動調整**: 各特徴量の重要度を手動で設定
+        - **重み付けなし**: 全特徴量を均等に使用
         
         ### ⚖️ NPB減額制限ルール
         - **1億円以上**: 最大40%まで減額可能（最低60%保証）
@@ -500,12 +598,16 @@ if data_loaded:
                     player_stats = player_stats.iloc[0]
                     features = player_stats[st.session_state.feature_cols].values.reshape(1, -1)
                     
+                    # 重み付けを適用
+                    weights = np.array([st.session_state.feature_weights.get(col, 1.0) for col in st.session_state.feature_cols])
+                    features_weighted = features * weights
+                    
                     # 予測（対数変換版）
-                    if st.session_state.best_model_name == '線形回帰':
-                        features_scaled = st.session_state.scaler.transform(features)
+                    if 'Ridge' in st.session_state.best_model_name or '線形回帰' in st.session_state.best_model_name:
+                        features_scaled = st.session_state.scaler.transform(features_weighted)
                         predicted_salary_log = st.session_state.best_model.predict(features_scaled)[0]
                     else:
-                        predicted_salary_log = st.session_state.best_model.predict(features)[0]
+                        predicted_salary_log = st.session_state.best_model.predict(features_weighted)[0]
                     
                     predicted_salary = np.expm1(predicted_salary_log)
                     
@@ -667,12 +769,16 @@ if data_loaded:
                         player_stats = player_stats.iloc[0]
                         features = player_stats[st.session_state.feature_cols].values.reshape(1, -1)
                         
+                        # 重み付けを適用
+                        weights = np.array([st.session_state.feature_weights.get(col, 1.0) for col in st.session_state.feature_cols])
+                        features_weighted = features * weights
+                        
                         # 予測（対数変換版）
-                        if st.session_state.best_model_name == '線形回帰':
-                            features_scaled = st.session_state.scaler.transform(features)
+                        if 'Ridge' in st.session_state.best_model_name or '線形回帰' in st.session_state.best_model_name:
+                            features_scaled = st.session_state.scaler.transform(features_weighted)
                             predicted_salary_log = st.session_state.best_model.predict(features_scaled)[0]
                         else:
-                            predicted_salary_log = st.session_state.best_model.predict(features)[0]
+                            predicted_salary_log = st.session_state.best_model.predict(features_weighted)[0]
                         
                         predicted_salary = np.expm1(predicted_salary_log)
                         
@@ -696,7 +802,7 @@ if data_loaded:
                             '前年年俸': previous_salary / 1e6 if previous_salary else None,
                             '予測年俸（制限前）': predicted_salary / 1e6,
                             '予測年俸（制限後）': display_salary / 1e6,
-                            '減額制限': '⚠️' if is_limited else '✓',
+                            '減額制限': 'あり' if is_limited else 'なし',
                             '打率': player_stats['打率'],
                             '本塁打': int(player_stats['本塁打']),
                             '打点': int(player_stats['打点']),
@@ -714,7 +820,7 @@ if data_loaded:
                     )
                     
                     # 減額制限に引っかかった選手を表示
-                    limited_players = df_results[df_results['減額制限'] == '⚠️']
+                    limited_players = df_results[df_results['減額制限'] == 'あり']
                     if not limited_players.empty:
                         st.warning("⚖️ **減額制限に引っかかった選手:**")
                         for _, row in limited_players.iterrows():
@@ -781,7 +887,7 @@ if data_loaded:
             hide_index=True
         )
         st.success(f"🏆 最良モデル: {st.session_state.best_model_name}")
-        st.info("💡 年俸を対数変換してから予測することで、高額・低額両方の年俸で予測精度が改善されました")
+        st.info(f"🎯 重み付けモード: {st.session_state.weight_mode}")
         
         if st.session_state.best_model_name == 'ランダムフォレスト':
             st.markdown("---")
@@ -865,6 +971,63 @@ if data_loaded:
             ax2.grid(alpha=0.3)
             st.pyplot(fig2)
             plt.close(fig2)
+    
+    # 重み付け詳細
+    elif menu == "⚖️ 重み付け詳細":
+        st.header("⚖️ 特徴量の重み付け詳細")
+        
+        st.info(f"**現在の重み付けモード**: {st.session_state.weight_mode}")
+        
+        # 重み付けデータを表示
+        weights_df = pd.DataFrame({
+            '特徴量': list(st.session_state.feature_weights.keys()),
+            '重み': list(st.session_state.feature_weights.values())
+        }).sort_values('重み', ascending=False)
+        
+        st.subheader("全特徴量の重み")
+        st.dataframe(
+            weights_df,
+            use_container_width=True,
+            hide_index=True
+        )
+        
+        # 重み付けTop 10を可視化
+        st.markdown("---")
+        st.subheader("重要度 Top 10")
+        
+        top_weights = weights_df.head(10)
+        
+        fig, ax = plt.subplots(figsize=(10, 6))
+        ax.barh(range(len(top_weights)), top_weights['重み'], color='#3498db', alpha=0.7)
+        ax.set_yticks(range(len(top_weights)))
+        ax.set_yticklabels(top_weights['特徴量'])
+        ax.set_xlabel('重み', fontweight='bold')
+        ax.set_title('特徴量の重み付け Top 10', fontweight='bold')
+        ax.grid(axis='x', alpha=0.3)
+        ax.invert_yaxis()
+        st.pyplot(fig)
+        plt.close(fig)
+        
+        # 重み付けモードの説明
+        st.markdown("---")
+        st.subheader("📖 重み付けモードについて")
+        
+        st.markdown("""
+        ### 🤖 自動最適化
+        Lasso回帰を使用して、年俸予測に最も影響を与える特徴量を自動的に抽出します。
+        - **メリット**: データに基づいた客観的な重み付け
+        - **用途**: 一般的な予測に最適
+        
+        ### ✋ 手動調整
+        ユーザーが各特徴量の重要度を自由に設定できます。
+        - **メリット**: ドメイン知識を反映可能
+        - **用途**: 特定の指標を重視したい場合
+        
+        ### 📊 重み付けなし
+        全ての特徴量を均等に扱います。
+        - **メリット**: シンプルで解釈が容易
+        - **用途**: ベースラインとしての比較
+        """)
 
 else:
     # ファイル未アップロード時
@@ -892,8 +1055,9 @@ else:
     - 📈 予測モデルの性能評価
     - 📉 年俸影響要因の分析
     - ⚖️ NPB減額制限ルールの適用
+    - 🎯 特徴量の重み付け（自動・手動）
     """)
 
 # フッター
 st.markdown("---")
-st.markdown("*NPB選手年俸予測システム（対数変換版 + 減額制限対応） - Powered by Streamlit*")
+st.markdown("*NPB選手年俸予測システム（対数変換 + 減額制限 + 重み付け対応） - Powered by Streamlit*")
