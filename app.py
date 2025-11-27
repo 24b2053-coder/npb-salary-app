@@ -776,7 +776,6 @@ if data_loaded:
             hide_index=True
         )
         st.success(f"🏆 最良モデル: {st.session_state.best_model_name}")
-        st.info("💡 年俸を対数変換してから予測することで、高額・低額両方の年俸で予測精度が改善されました")
         
         if st.session_state.best_model_name == 'ランダムフォレスト':
             st.markdown("---")
@@ -892,6 +891,7 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム（対数変換版 + 減額制限対応） - Powered by Streamlit*")
+
 
 
 
