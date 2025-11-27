@@ -240,6 +240,19 @@ def load_data():
     except FileNotFoundError:
         return None, None, None, False
 
+# ファイルの存在確認（キャッシュを使わない）
+import os
+files_exist = all([
+    os.path.exists('data/salary_2023&2024&2025.csv'),
+    os.path.exists('data/merged_stats_age.csv'),
+    os.path.exists('data/titles_2023&2024&2025.csv')
+])
+
+# ファイルが存在する場合のみキャッシュ関数を呼ぶ
+if files_exist:
+    salary_df, merged_stats, titles_df, data_loaded = load_data()
+else:
+    salary_df, merged_stats, titles_df, data_loaded = None, None, None, False
 salary_df, merged_stats, titles_df, data_loaded = load_data()
 
 # ファイルアップロード処理（dataフォルダにファイルがない場合のみ表示）
@@ -873,5 +886,6 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム（対数変換版 + 減額制限対応） - Powered by Streamlit*")
+
 
 
