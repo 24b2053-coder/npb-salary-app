@@ -235,19 +235,18 @@ if 'feature_weights' not in st.session_state:
 
 # データ読み込み処理
 @st.cache_data
+@st.cache_data
 def load_data():
-    """データを読み込んでキャッシュする"""
+    """3つのCSVファイルを読み込む（statsは merged_stats_age.csv に統合済み）"""
     try:
-        salary_df = pd.read_csv('data/salary_2023&2024&2025.csv')
-        stats_2023 = pd.read_csv('data/stats_2023.csv')
-        stats_2024 = pd.read_csv('data/stats_2024.csv')
-        stats_2025 = pd.read_csv('data/stats_2025.csv')
-        titles_df = pd.read_csv('data/titles_2023&2024&2025.csv')
-        return salary_df, stats_2023, stats_2024, stats_2025, titles_df, True
+        stats_df = pd.read_csv('merged_stats_age.csv')
+        salary_df = pd.read_csv('salary_2023&2024&2025.csv')
+        titles_df = pd.read_csv('titles_2023&2024&2025.csv')
+        return stats_df, salary_df, titles_df, True
     except FileNotFoundError:
-        return None, None, None, None, None, False
+        return None, None, None, False
 
-salary_df, stats_2023, stats_2024, stats_2025, titles_df, data_loaded = load_data()
+stats_df, salary_df, titles_df, data_loaded = load_data()
 
 # ファイルアップロード処理
 if not data_loaded:
@@ -286,56 +285,57 @@ if not data_loaded:
 
 # データ前処理関数
 @st.cache_data
-def prepare_data(_salary_df, _stats_2023, _stats_2024, _stats_2025, _titles_df):
-    """データの前処理を行う"""
-    titles_df_clean = _titles_df.dropna(subset=['選手名'])
+def prepare_data(stats_df, salary_df, titles_df):
+    """merged_stats_age.csv + salary + titles を使った前処理"""
+
+    # ---- タイトル数集計 ----
+    titles_df_clean = titles_df.dropna(subset=['選手名'])
     title_summary = titles_df_clean.groupby(['選手名', '年度']).size().reset_index(name='タイトル数')
-    
-    stats_2023_copy = _stats_2023.copy()
-    stats_2024_copy = _stats_2024.copy()
-    stats_2025_copy = _stats_2025.copy()
-    
-    stats_2023_copy['年度'] = 2023
-    stats_2024_copy['年度'] = 2024
-    stats_2025_copy['年度'] = 2025
-    
-    stats_all = pd.concat([stats_2023_copy, stats_2024_copy, stats_2025_copy], ignore_index=True)
-    
-    df_2023 = _salary_df[['選手名_2023', '年俸_円_2023']].copy()
+
+    # ---- 成績データ（stats_df = merged_stats_age.csv） ----
+    stats_df = stats_df.copy()
+
+    # タイトルを付与
+    stats_df = pd.merge(
+        stats_df,
+        title_summary,
+        on=['選手名', '年度'],
+        how='left'
+    )
+    stats_df['タイトル数'] = stats_df['タイトル数'].fillna(0)
+
+    # ---- 年俸データ（縦持ちに整形） ----
+    df_2023 = salary_df[['選手名_2023', '年俸_円_2023']].dropna()
+    df_2023 = df_2023.rename(columns={'選手名_2023': '選手名', '年俸_円_2023': '年俸_円'})
     df_2023['年度'] = 2023
-    df_2023.rename(columns={'選手名_2023': '選手名', '年俸_円_2023': '年俸_円'}, inplace=True)
-    
-    df_2024 = _salary_df[['選手名_2024_2025', '年俸_円_2024']].copy()
+
+    df_2024 = salary_df[['選手名_2024_2025', '年俸_円_2024']].dropna()
+    df_2024 = df_2024.rename(columns={'選手名_2024_2025': '選手名', '年俸_円_2024': '年俸_円'})
     df_2024['年度'] = 2024
-    df_2024.rename(columns={'選手名_2024_2025': '選手名', '年俸_円_2024': '年俸_円'}, inplace=True)
-    
-    df_2025 = _salary_df[['選手名_2024_2025', '年俸_円_2025']].copy()
+
+    df_2025 = salary_df[['選手名_2024_2025', '年俸_円_2025']].dropna()
+    df_2025 = df_2025.rename(columns={'選手名_2024_2025': '選手名', '年俸_円_2025': '年俸_円'})
     df_2025['年度'] = 2025
-    df_2025.rename(columns={'選手名_2024_2025': '選手名', '年俸_円_2025': '年俸_円'}, inplace=True)
-    
+
     salary_long = pd.concat([df_2023, df_2024, df_2025], ignore_index=True)
-    salary_long = salary_long.dropna(subset=['年俸_円'])
-    salary_long = salary_long[salary_long['年俸_円'] > 0]
-    salary_long = salary_long.sort_values('年俸_円', ascending=False)
-    salary_long = salary_long.drop_duplicates(subset=['選手名', '年度'], keep='first')
-    
-    stats_all['予測年度'] = stats_all['年度'] + 1
-    merged_df = pd.merge(stats_all, title_summary, on=['選手名', '年度'], how='left')
-    merged_df['タイトル数'] = merged_df['タイトル数'].fillna(0)
+    salary_long = salary_long.sort_values(['選手名', '年度'])
+
+    # 🔥 2023年成績 → 2024年の年俸  
+    # 🔥 2024年成績 → 2025年の年俸  
+    stats_df['予測年度'] = stats_df['年度'] + 1
+
     merged_df = pd.merge(
-        merged_df,
+        stats_df,
         salary_long,
         left_on=['選手名', '予測年度'],
         right_on=['選手名', '年度'],
-        suffixes=('_成績', '_年俸')
+        how='inner'
     )
-    merged_df = merged_df.drop(columns=['年度_年俸', '予測年度'])
-    merged_df.rename(columns={'年度_成績': '成績年度'}, inplace=True)
-    
-    stats_all_with_titles = pd.merge(stats_all, title_summary, on=['選手名', '年度'], how='left')
-    stats_all_with_titles['タイトル数'] = stats_all_with_titles['タイトル数'].fillna(0)
-    
-    return merged_df, stats_all_with_titles, salary_long
+
+    merged_df = merged_df.drop(columns=['年度_y'])
+    merged_df = merged_df.rename(columns={'年度_x': '成績年度'})
+
+    return merged_df, stats_df, salary_long
 
 # 自動重み付け関数
 def calculate_auto_weights(X, y):
@@ -442,9 +442,9 @@ if data_loaded:
     
     if not st.session_state.model_trained or weight_changed:
         with st.spinner('🤖 モデルを訓練中...'):
-            merged_df, stats_all_with_titles, salary_long = prepare_data(
-                salary_df, stats_2023, stats_2024, stats_2025, titles_df
-            )
+           merged_df, stats_all_with_titles, salary_long = prepare_data(
+    stats_df, salary_df, titles_df
+)
             
             best_model, best_model_name, scaler, feature_cols, results, ml_df, feature_weights = train_models(
                 merged_df,
@@ -1017,6 +1017,7 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム（対数変換 + 減額制限 + 重み付け対応） - Powered by Streamlit*")
+
 
 
 
