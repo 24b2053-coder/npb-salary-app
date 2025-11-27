@@ -652,8 +652,8 @@ if previous_salary is not None:
                         is_limited, min_salary, reduction_rate = check_salary_reduction_limit(predicted_salary, previous_salary)
                         if is_limited:
                             display_salary = min_salary
-                    
-                    results_list.append({
+
+results_list.append({
                         '選手名': player,
                         '前年年俸': previous_salary / 1e6 if previous_salary else None,
                         '予測年俸（制限前）': predicted_salary / 1e6,
@@ -851,5 +851,6 @@ data/
 """)
 st.markdown("---")
 st.markdown("NPB選手年俸予測システム（対数変換版 + 減額制限対応 + 年齢考慮） - Powered by Streamlit")
+
 
 
