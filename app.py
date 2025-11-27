@@ -186,17 +186,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# 採用モデルの metric を左寄せする CSS
-st.markdown("""
-<style>
-.metric-left > div {
-    justify-content: flex-start !important;
-    text-align: left !important;
-}
-</style>
-""", unsafe_allow_html=True)
-
-
 # 日本語フォント設定
 try:
     import japanize_matplotlib
@@ -909,6 +898,7 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム（対数変換版 + 減額制限対応） - Powered by Streamlit*")
+
 
 
 
