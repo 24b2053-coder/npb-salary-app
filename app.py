@@ -242,7 +242,7 @@ def load_data():
 
 salary_df, merged_stats, titles_df, data_loaded = load_data()
 
-# ファイルアップロード処理
+# ファイルアップロード処理（dataフォルダにファイルがない場合のみ表示）
 if not data_loaded:
     st.sidebar.markdown("**3つのCSVファイルを一度に選択してアップロード：**")
     uploaded_files = st.sidebar.file_uploader(
@@ -873,4 +873,5 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム（対数変換版 + 減額制限対応） - Powered by Streamlit*")
+
 
