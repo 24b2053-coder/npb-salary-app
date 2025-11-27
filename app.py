@@ -722,7 +722,7 @@ if results_list:
                     ax2.grid(axis='y', alpha=0.3)
                     st.pyplot(fig2)
                     plt.close(fig2)
-else:
+    else:
         st.info("👆 2人以上の選手を選択してください")
 
 # モデル性能
@@ -851,6 +851,7 @@ data/
 """)
 st.markdown("---")
 st.markdown("NPB選手年俸予測システム（対数変換版 + 減額制限対応 + 年齢考慮） - Powered by Streamlit")
+
 
 
 
