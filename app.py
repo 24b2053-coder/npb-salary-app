@@ -435,7 +435,6 @@ if data_loaded:
     # モデル訓練フラグの変更検知
     weight_changed = False
     if 'last_weight_mode' not in st.session_state:
-        st.session_state.last_weight_mode = weight_mode
         weight_changed = True
     elif st.session_state.last_weight_mode != weight_mode:
         st.session_state.last_weight_mode = weight_mode
@@ -1018,6 +1017,7 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム（対数変換 + 減額制限 + 重み付け対応） - Powered by Streamlit*")
+
 
 
 
