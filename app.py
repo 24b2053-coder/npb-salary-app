@@ -273,9 +273,7 @@ if not data_loaded:
         
         if len(file_dict) == 5:
             salary_df = pd.read_csv(file_dict['salary'])
-            stats_2023 = pd.read_csv(file_dict['stats_2023'])
-            stats_2024 = pd.read_csv(file_dict['stats_2024'])
-            stats_2025 = pd.read_csv(file_dict['stats_2025'])
+            stats = pd.read_csv(file_dict['merged_stats_age.csv'])
             titles_df = pd.read_csv(file_dict['titles'])
             data_loaded = True
         else:
@@ -305,19 +303,19 @@ def prepare_data(stats_df, salary_df, titles_df):
     stats_df['タイトル数'] = stats_df['タイトル数'].fillna(0)
 
     # ---- 年俸データ（縦持ちに整形） ----
-    df_2023 = salary_df[['選手名_2023', '年俸_円_2023']].dropna()
-    df_2023 = df_2023.rename(columns={'選手名_2023': '選手名', '年俸_円_2023': '年俸_円'})
-    df_2023['年度'] = 2023
+    stats = salary_df[['選手名_2023', '年俸_円_2023']].dropna()
+    stats = df_2023.rename(columns={'選手名_2023': '選手名', '年俸_円_2023': '年俸_円'})
+    stats['年度'] = 2023
 
-    df_2024 = salary_df[['選手名_2024_2025', '年俸_円_2024']].dropna()
-    df_2024 = df_2024.rename(columns={'選手名_2024_2025': '選手名', '年俸_円_2024': '年俸_円'})
-    df_2024['年度'] = 2024
+    stats = salary_df[['選手名_2024_2025', '年俸_円_2024']].dropna()
+    stats = df_2024.rename(columns={'選手名_2024_2025': '選手名', '年俸_円_2024': '年俸_円'})
+    stats['年度'] = 2024
 
-    df_2025 = salary_df[['選手名_2024_2025', '年俸_円_2025']].dropna()
-    df_2025 = df_2025.rename(columns={'選手名_2024_2025': '選手名', '年俸_円_2025': '年俸_円'})
-    df_2025['年度'] = 2025
+    stats = salary_df[['選手名_2024_2025', '年俸_円_2025']].dropna()
+    stats = df_2025.rename(columns={'選手名_2024_2025': '選手名', '年俸_円_2025': '年俸_円'})
+    stats['年度'] = 2025
 
-    salary_long = pd.concat([df_2023, df_2024, df_2025], ignore_index=True)
+    salary_long = pd.concat([stats], ignore_index=True)
     salary_long = salary_long.sort_values(['選手名', '年度'])
 
     # 🔥 2023年成績 → 2024年の年俸  
@@ -1018,6 +1016,7 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム（対数変換 + 減額制限 + 重み付け対応） - Powered by Streamlit*")
+
 
 
 
