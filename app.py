@@ -419,15 +419,20 @@ if data_loaded:
         label_visibility="collapsed"
     )
     
-   # ホーム
+    # ホーム
     if menu == "🏠 ホーム":
-        col1, col2, col3 = st.columns([2, 3, 2])
+        col1, col2, col3 = st.columns(3)
         with col1:
             st.metric("訓練データ数", f"{len(st.session_state.ml_df)}人")
         with col2:
             st.metric("採用モデル", st.session_state.best_model_name)
         with col3:
             st.metric("R²スコア", f"{st.session_state.results[st.session_state.best_model_name]['R2']:.4f}")
+        
+        st.markdown("---")
+        st.info("📊 **改良版**: 年俸を対数変換してから予測し、元のスケールに戻すことで予測精度が向上しました")
+        
+        st.markdown("---")
         st.subheader("📖 使い方")
         st.markdown("""
         1. **左サイドバー**のメニューから機能を選択
@@ -691,7 +696,7 @@ if data_loaded:
                             '前年年俸': previous_salary / 1e6 if previous_salary else None,
                             '予測年俸（制限前）': predicted_salary / 1e6,
                             '予測年俸（制限後）': display_salary / 1e6,
-                            '減額制限': 'あり' if is_limited else 'なし',
+                            '減額制限': '⚠️' if is_limited else '✓',
                             '打率': player_stats['打率'],
                             '本塁打': int(player_stats['本塁打']),
                             '打点': int(player_stats['打点']),
@@ -776,6 +781,7 @@ if data_loaded:
             hide_index=True
         )
         st.success(f"🏆 最良モデル: {st.session_state.best_model_name}")
+        st.info("💡 年俸を対数変換してから予測することで、高額・低額両方の年俸で予測精度が改善されました")
         
         if st.session_state.best_model_name == 'ランダムフォレスト':
             st.markdown("---")
