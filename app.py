@@ -696,7 +696,7 @@ if data_loaded:
                             '前年年俸': previous_salary / 1e6 if previous_salary else None,
                             '予測年俸（制限前）': predicted_salary / 1e6,
                             '予測年俸（制限後）': display_salary / 1e6,
-                            '減額制限': '⚠️' if is_limited else '✓',
+                            '減額制限': 'あり' if is_limited else 'なし',
                             '打率': player_stats['打率'],
                             '本塁打': int(player_stats['本塁打']),
                             '打点': int(player_stats['打点']),
@@ -897,3 +897,4 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム（対数変換版 + 減額制限対応） - Powered by Streamlit*")
+
