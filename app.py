@@ -647,8 +647,8 @@ if data_loaded:
 previous_salary = previous_salary_data['年俸_円'].values[0] if not previous_salary_data.empty else None
                     # 減額制限チェック
 is_limited = False
-                    display_salary = predicted_salary
-                    if previous_salary is not None:
+display_salary = predicted_salary
+if previous_salary is not None:
                         is_limited, min_salary, reduction_rate = check_salary_reduction_limit(predicted_salary, previous_salary)
                         if is_limited:
                             display_salary = min_salary
@@ -851,4 +851,5 @@ data/
 """)
 st.markdown("---")
 st.markdown("NPB選手年俸予測システム（対数変換版 + 減額制限対応 + 年齢考慮） - Powered by Streamlit")
+
 
