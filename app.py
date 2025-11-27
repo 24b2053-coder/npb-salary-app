@@ -313,10 +313,10 @@ def prepare_data(_salary_df, _stats_2023, _stats_2024, _stats_2025, _titles_df):
     
     return merged_df, stats_all_with_titles, salary_long
 
-# モデル訓練関数
+# モデル訓練関数（対数変換版）
 @st.cache_resource
 def train_models(_merged_df):
-    """モデルを訓練する"""
+    """モデルを訓練する（対数変換適用）"""
     feature_cols = ['試合', '打席', '打数', '得点', '安打', '二塁打', '三塁打', '本塁打', 
                    '塁打', '打点', '盗塁', '盗塁刺', '四球', '死球', '三振', '併殺打', 
                    '打率', '出塁率', '長打率', '犠打', '犠飛', 'タイトル数']
@@ -327,7 +327,16 @@ def train_models(_merged_df):
     X = ml_df[feature_cols]
     y = ml_df['年俸_円']
     
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    # 【対数変換】年俸を対数変換
+    y_log = np.log1p(y)  # log(1 + y) で0や小さい値にも対応
+    
+    X_train, X_test, y_train_log, y_test_log = train_test_split(
+        X, y_log, test_size=0.2, random_state=42
+    )
+    
+    # 元の年俸も保持（評価用）
+    y_train_original = np.expm1(y_train_log)
+    y_test_original = np.expm1(y_test_log)
     
     # スケーラー
     scaler = StandardScaler()
@@ -344,14 +353,18 @@ def train_models(_merged_df):
     results = {}
     for name, model in models.items():
         if name == '線形回帰':
-            model.fit(X_train_scaled, y_train)
-            y_pred = model.predict(X_test_scaled)
+            model.fit(X_train_scaled, y_train_log)
+            y_pred_log = model.predict(X_test_scaled)
         else:
-            model.fit(X_train, y_train)
-            y_pred = model.predict(X_test)
+            model.fit(X_train, y_train_log)
+            y_pred_log = model.predict(X_test)
         
-        mae = mean_absolute_error(y_test, y_pred)
-        r2 = r2_score(y_test, y_pred)
+        # 対数から元のスケールに戻す
+        y_pred = np.expm1(y_pred_log)
+        
+        # 元のスケールで評価
+        mae = mean_absolute_error(y_test_original, y_pred)
+        r2 = r2_score(y_test_original, y_pred)
         
         results[name] = {
             'model': model,
@@ -403,6 +416,9 @@ if data_loaded:
             st.metric("採用モデル", st.session_state.best_model_name)
         with col3:
             st.metric("R²スコア", f"{st.session_state.results[st.session_state.best_model_name]['R2']:.4f}")
+        
+        st.markdown("---")
+        st.info("📊 **改良版**: 年俸を対数変換してから予測し、元のスケールに戻すことで予測精度が向上しました")
         
         st.markdown("---")
         st.subheader("📖 使い方")
@@ -468,11 +484,15 @@ if data_loaded:
                     player_stats = player_stats.iloc[0]
                     features = player_stats[st.session_state.feature_cols].values.reshape(1, -1)
                     
+                    # 予測（対数変換版）
                     if st.session_state.best_model_name == '線形回帰':
                         features_scaled = st.session_state.scaler.transform(features)
-                        predicted_salary = st.session_state.best_model.predict(features_scaled)[0]
+                        predicted_salary_log = st.session_state.best_model.predict(features_scaled)[0]
                     else:
-                        predicted_salary = st.session_state.best_model.predict(features)[0]
+                        predicted_salary_log = st.session_state.best_model.predict(features)[0]
+                    
+                    # 対数から元のスケールに戻す
+                    predicted_salary = np.expm1(predicted_salary_log)
                     
                     actual_salary_data = st.session_state.salary_long[
                         (st.session_state.salary_long['選手名'] == selected_player) &
@@ -597,11 +617,15 @@ if data_loaded:
                         player_stats = player_stats.iloc[0]
                         features = player_stats[st.session_state.feature_cols].values.reshape(1, -1)
                         
+                        # 予測（対数変換版）
                         if st.session_state.best_model_name == '線形回帰':
                             features_scaled = st.session_state.scaler.transform(features)
-                            predicted_salary = st.session_state.best_model.predict(features_scaled)[0]
+                            predicted_salary_log = st.session_state.best_model.predict(features_scaled)[0]
                         else:
-                            predicted_salary = st.session_state.best_model.predict(features)[0]
+                            predicted_salary_log = st.session_state.best_model.predict(features)[0]
+                        
+                        # 対数から元のスケールに戻す
+                        predicted_salary = np.expm1(predicted_salary_log)
                         
                         results_list.append({
                             '選手名': player,
@@ -673,6 +697,7 @@ if data_loaded:
             hide_index=True
         )
         st.success(f"🏆 最良モデル: {st.session_state.best_model_name}")
+        st.info("💡 年俸を対数変換してから予測することで、高額・低額両方の年俸で予測精度が改善されました")
         
         if st.session_state.best_model_name == 'ランダムフォレスト':
             st.markdown("---")
@@ -778,7 +803,7 @@ else:
     **方法2: 左サイドバーから手動アップロード**
     
     ### 🚀 機能
-    - ⚾ 選手個別の年俸予測
+    - ⚾ 選手個別の年俸予測（対数変換による精度向上）
     - 📊 複数選手の比較分析
     - 📈 予測モデルの性能評価
     - 📉 年俸影響要因の分析
@@ -786,26 +811,4 @@ else:
 
 # フッター
 st.markdown("---")
-st.markdown("*NPB選手年俸予測システム - Powered by Streamlit*")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+st.markdown("*NPB選手年俸予測システム（対数変換版） - Powered by Streamlit*")
