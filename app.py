@@ -452,9 +452,6 @@ if data_loaded:
                 use_auto_weight=True,
                 manual_weights=None
             )
-
-            )
-            
             st.session_state.model_trained = True
             st.session_state.best_model = best_model
             st.session_state.best_model_name = best_model_name
@@ -1021,6 +1018,7 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム（対数変換 + 減額制限 + 重み付け対応） - Powered by Streamlit*")
+
 
 
 
