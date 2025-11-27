@@ -419,21 +419,14 @@ if data_loaded:
         label_visibility="collapsed"
     )
     
-   if menu == "🏠 ホーム":
-
-    # 採用モデルを広く、右側を少し狭く
-    col_left, col_right = st.columns([2, 1.5])
-
-    with col_left:
-        st.metric("採用モデル", st.session_state.best_model_name)
-
-    with col_right:
-        c1, c2 = st.columns(2)
-
-        with c1:
+   # ホーム
+    if menu == "🏠 ホーム":
+        col1, col2, col3 = st.columns(3)
+        with col1:
             st.metric("訓練データ数", f"{len(st.session_state.ml_df)}人")
-
-        with c2:
+        with col2:
+            st.metric("採用モデル", st.session_state.best_model_name)
+        with col3:
             st.metric("R²スコア", f"{st.session_state.results[st.session_state.best_model_name]['R2']:.4f}")
 
         
@@ -905,6 +898,7 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム（対数変換版 + 減額制限対応） - Powered by Streamlit*")
+
 
 
 
