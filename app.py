@@ -431,39 +431,7 @@ def train_models(_merged_df, use_auto_weight=True, manual_weights=None):
 
 # データ読み込みとモデル訓練
 if data_loaded:
-    # サイドバーに重み付け設定を追加
-    st.sidebar.markdown("---")
-    st.sidebar.markdown("### ⚙️ 重み付け設定")
-    
-    weight_mode = st.sidebar.radio(
-        "重み付けモード",
-        ["自動最適化", "手動調整", "重み付けなし"],
-        key="weight_mode",
-        help="自動最適化: Lasso回帰で自動的に重要な特徴量を抽出\n手動調整: 各特徴量の重要度を手動で設定"
-    )
-    
-    use_auto_weight = (weight_mode == "自動最適化")
-    use_manual_weight = (weight_mode == "手動調整")
-    
     manual_weights = None
-    if use_manual_weight:
-        st.sidebar.markdown("#### 特徴量の重み調整")
-        st.sidebar.markdown("*重要度が高い項目の値を大きくしてください*")
-        
-        # 主要な特徴量のみ手動調整可能に
-        key_features = ['打率', '本塁打', '打点', '出塁率', '長打率', 'タイトル数', '安打', '試合']
-        manual_weights = {}
-        
-        for feature in key_features:
-            manual_weights[feature] = st.sidebar.slider(
-                feature,
-                min_value=0.0,
-                max_value=5.0,
-                value=1.0,
-                step=0.1,
-                key=f"weight_{feature}"
-            )
-    
     # モデル訓練フラグの変更検知
     weight_changed = False
     if 'last_weight_mode' not in st.session_state:
@@ -480,9 +448,11 @@ if data_loaded:
             )
             
             best_model, best_model_name, scaler, feature_cols, results, ml_df, feature_weights = train_models(
-                merged_df, 
-                use_auto_weight=use_auto_weight,
-                manual_weights=manual_weights if use_manual_weight else None
+                merged_df,
+                use_auto_weight=True,
+                manual_weights=None
+            )
+
             )
             
             st.session_state.model_trained = True
@@ -514,14 +484,6 @@ if data_loaded:
             st.metric("採用モデル", st.session_state.best_model_name)
         with col3:
             st.metric("R²スコア", f"{st.session_state.results[st.session_state.best_model_name]['R2']:.4f}")
-        
-        # 現在の重み付けモードを表示
-        if st.session_state.weight_mode == "自動最適化":
-            st.info("🤖 **重み付けモード**: 自動最適化（Lasso回帰による特徴量選択）")
-        elif st.session_state.weight_mode == "手動調整":
-            st.info("✋ **重み付けモード**: 手動調整")
-        else:
-            st.info("📊 **重み付けモード**: 重み付けなし（全特徴量を均等に使用）")
         
         st.subheader("📖 使い方")
         st.markdown("""
@@ -1059,5 +1021,6 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム（対数変換 + 減額制限 + 重み付け対応） - Powered by Streamlit*")
+
 
 
