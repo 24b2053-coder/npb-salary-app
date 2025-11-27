@@ -666,7 +666,7 @@ results_list.append({
                         '年齢': f"{int(player_stats['年齢'])}歳"
                     })
             
-            if results_list:
+if results_list:
                 df_results = pd.DataFrame(results_list)
                 
                 st.dataframe(
@@ -851,6 +851,7 @@ data/
 """)
 st.markdown("---")
 st.markdown("NPB選手年俸予測システム（対数変換版 + 減額制限対応 + 年齢考慮） - Powered by Streamlit")
+
 
 
 
