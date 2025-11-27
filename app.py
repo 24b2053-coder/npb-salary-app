@@ -421,7 +421,7 @@ if data_loaded:
     
    # ホーム
     if menu == "🏠 ホーム":
-        col1, col2, col3 = st.columns(1,2,1)
+        col1, col2, col3 = st.columns([1, 2, 1])
         with col1:
             st.metric("訓練データ数", f"{len(st.session_state.ml_df)}人")
         with col2:
@@ -892,6 +892,7 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム（対数変換版 + 減額制限対応） - Powered by Streamlit*")
+
 
 
 
