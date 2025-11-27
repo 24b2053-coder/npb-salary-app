@@ -436,9 +436,7 @@ if data_loaded:
         with col1:
             st.metric("訓練データ数", f"{len(st.session_state.ml_df)}人")
         with col2:
-        st.markdown('<div class="metric-left">', unsafe_allow_html=True)
-        st.metric("採用モデル", st.session_state.best_model_name)
-        st.markdown('</div>', unsafe_allow_html=True)
+            st.metric("採用モデル", st.session_state.best_model_name)
         with col3:
             st.metric("R²スコア", f"{st.session_state.results[st.session_state.best_model_name]['R2']:.4f}")
 
@@ -911,6 +909,7 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム（対数変換版 + 減額制限対応） - Powered by Streamlit*")
+
 
 
 
