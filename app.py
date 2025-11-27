@@ -443,8 +443,8 @@ if data_loaded:
     if not st.session_state.model_trained or weight_changed:
         with st.spinner('🤖 モデルを訓練中...'):
            merged_df, stats_all_with_titles, salary_long = prepare_data(
-    stats_df, salary_df, titles_df
-)
+        　 stats_df, salary_df, titles_df
+   　　　　 )
             
             best_model, best_model_name, scaler, feature_cols, results, ml_df, feature_weights = train_models(
                 merged_df,
@@ -1017,6 +1017,7 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム（対数変換 + 減額制限 + 重み付け対応） - Powered by Streamlit*")
+
 
 
 
