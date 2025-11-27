@@ -233,82 +233,114 @@ if 'model_trained' not in st.session_state:
 def load_data():
     """データを読み込んでキャッシュする"""
     try:
-        merged_stats = pd.read_csv('data/merged_stats_salary_age.csv')
+        salary_df = pd.read_csv('data/salary_2023&2024&2025.csv')
+        stats_2023 = pd.read_csv('data/stats_2023.csv')
+        stats_2024 = pd.read_csv('data/stats_2024.csv')
+        stats_2025 = pd.read_csv('data/stats_2025.csv')
         titles_df = pd.read_csv('data/titles_2023&2024&2025.csv')
-        return merged_stats, titles_df, True
+        return salary_df, stats_2023, stats_2024, stats_2025, titles_df, True
     except FileNotFoundError:
-        return None, None, False
+        return None, None, None, None, None, False
 
-merged_stats, titles_df, data_loaded = load_data()
+salary_df, stats_2023, stats_2024, stats_2025, titles_df, data_loaded = load_data()
 
 # ファイルアップロード処理
 if not data_loaded:
-    st.sidebar.markdown("**2つのCSVファイルを一度に選択してアップロード：**")
+    st.sidebar.markdown("**5つのCSVファイルを一度に選択してアップロード：**")
     uploaded_files = st.sidebar.file_uploader(
-        "CSVファイルを選択（2つ選択してください）",
+        "CSVファイルを選択（5つ全て選択してください）",
         type=['csv'],
         accept_multiple_files=True
     )
     
-    if uploaded_files and len(uploaded_files) == 2:
+    if uploaded_files and len(uploaded_files) == 5:
         file_dict = {}
         for file in uploaded_files:
-            if 'merged' in file.name or '統合' in file.name:
-                file_dict['merged_stats'] = file
+            if 'salary' in file.name or '年俸' in file.name:
+                file_dict['salary'] = file
             elif 'titles' in file.name or 'タイトル' in file.name:
                 file_dict['titles'] = file
+            elif '2023' in file.name:
+                file_dict['stats_2023'] = file
+            elif '2024' in file.name:
+                file_dict['stats_2024'] = file
+            elif '2025' in file.name:
+                file_dict['stats_2025'] = file
         
-        if len(file_dict) == 2:
-            merged_stats = pd.read_csv(file_dict['merged_stats'])
+        if len(file_dict) == 5:
+            salary_df = pd.read_csv(file_dict['salary'])
+            stats_2023 = pd.read_csv(file_dict['stats_2023'])
+            stats_2024 = pd.read_csv(file_dict['stats_2024'])
+            stats_2025 = pd.read_csv(file_dict['stats_2025'])
             titles_df = pd.read_csv(file_dict['titles'])
             data_loaded = True
         else:
             st.sidebar.error("❌ ファイル名が正しくありません")
     elif uploaded_files:
-        st.sidebar.warning(f"⚠️ {len(uploaded_files)}個のファイルが選択されています。2つ必要です。")
+        st.sidebar.warning(f"⚠️ {len(uploaded_files)}個のファイルが選択されています。5つ必要です。")
 
 # データ前処理関数
 @st.cache_data
-def prepare_data(_merged_stats, _titles_df):
+def prepare_data(_salary_df, _stats_2023, _stats_2024, _stats_2025, _titles_df):
     """データの前処理を行う"""
-    # タイトル数の集計
     titles_df_clean = _titles_df.dropna(subset=['選手名'])
     title_summary = titles_df_clean.groupby(['選手名', '年度']).size().reset_index(name='タイトル数')
     
-    # merged_statsにタイトル数をマージ
-    stats_with_titles = pd.merge(_merged_stats, title_summary, on=['選手名', '年度'], how='left')
-    stats_with_titles['タイトル数'] = stats_with_titles['タイトル数'].fillna(0)
+    stats_2023_copy = _stats_2023.copy()
+    stats_2024_copy = _stats_2024.copy()
+    stats_2025_copy = _stats_2025.copy()
     
-    # 次年度の年俸データを結合するための準備
-    stats_with_titles['予測年度'] = stats_with_titles['年度'] + 1
+    stats_2023_copy['年度'] = 2023
+    stats_2024_copy['年度'] = 2024
+    stats_2025_copy['年度'] = 2025
     
-    # 年俸データの準備（次年度の年俸を取得）
-    salary_data = _merged_stats[['選手名', '年度', '年俸_円']].copy()
+    stats_all = pd.concat([stats_2023_copy, stats_2024_copy, stats_2025_copy], ignore_index=True)
     
-    # 成績年度の次年度の年俸とマージ
-    ml_data = pd.merge(
-        stats_with_titles,
-        salary_data,
+    df_2023 = _salary_df[['選手名_2023', '年俸_円_2023']].copy()
+    df_2023['年度'] = 2023
+    df_2023.rename(columns={'選手名_2023': '選手名', '年俸_円_2023': '年俸_円'}, inplace=True)
+    
+    df_2024 = _salary_df[['選手名_2024_2025', '年俸_円_2024']].copy()
+    df_2024['年度'] = 2024
+    df_2024.rename(columns={'選手名_2024_2025': '選手名', '年俸_円_2024': '年俸_円'}, inplace=True)
+    
+    df_2025 = _salary_df[['選手名_2024_2025', '年俸_円_2025']].copy()
+    df_2025['年度'] = 2025
+    df_2025.rename(columns={'選手名_2024_2025': '選手名', '年俸_円_2025': '年俸_円'}, inplace=True)
+    
+    salary_long = pd.concat([df_2023, df_2024, df_2025], ignore_index=True)
+    salary_long = salary_long.dropna(subset=['年俸_円'])
+    salary_long = salary_long[salary_long['年俸_円'] > 0]
+    salary_long = salary_long.sort_values('年俸_円', ascending=False)
+    salary_long = salary_long.drop_duplicates(subset=['選手名', '年度'], keep='first')
+    
+    stats_all['予測年度'] = stats_all['年度'] + 1
+    merged_df = pd.merge(stats_all, title_summary, on=['選手名', '年度'], how='left')
+    merged_df['タイトル数'] = merged_df['タイトル数'].fillna(0)
+    merged_df = pd.merge(
+        merged_df,
+        salary_long,
         left_on=['選手名', '予測年度'],
         right_on=['選手名', '年度'],
         suffixes=('_成績', '_年俸')
     )
+    merged_df = merged_df.drop(columns=['年度_年俸', '予測年度'])
+    merged_df.rename(columns={'年度_成績': '成績年度'}, inplace=True)
     
-    # 不要な列を削除
-    ml_data = ml_data.drop(columns=['年度_年俸', '予測年度'])
-    ml_data.rename(columns={'年度_成績': '成績年度'}, inplace=True)
+    stats_all_with_titles = pd.merge(stats_all, title_summary, on=['選手名', '年度'], how='left')
+    stats_all_with_titles['タイトル数'] = stats_all_with_titles['タイトル数'].fillna(0)
     
-    return ml_data, stats_with_titles, salary_data
+    return merged_df, stats_all_with_titles, salary_long
 
-# モデル訓練関数（対数変換版 + 年齢追加）
+# モデル訓練関数（対数変換版）
 @st.cache_resource
-def train_models(_ml_data):
-    """モデルを訓練する（対数変換適用 + 年齢を特徴量に追加）"""
+def train_models(_merged_df):
+    """モデルを訓練する（対数変換適用）"""
     feature_cols = ['試合', '打席', '打数', '得点', '安打', '二塁打', '三塁打', '本塁打', 
                    '塁打', '打点', '盗塁', '盗塁刺', '四球', '死球', '三振', '併殺打', 
-                   '打率', '出塁率', '長打率', '犠打', '犠飛', 'タイトル数', '年齢']
+                   '打率', '出塁率', '長打率', '犠打', '犠飛', 'タイトル数']
     
-    ml_df = _ml_data[feature_cols + ['年俸_円', '選手名', '成績年度']].copy()
+    ml_df = _merged_df[feature_cols + ['年俸_円', '選手名', '成績年度']].copy()
     ml_df = ml_df.dropna()
     
     X = ml_df[feature_cols]
@@ -362,9 +394,11 @@ def train_models(_ml_data):
 if data_loaded:
     if not st.session_state.model_trained:
         with st.spinner('🤖 モデルを訓練中...'):
-            ml_data, stats_all_with_titles, salary_data = prepare_data(merged_stats, titles_df)
+            merged_df, stats_all_with_titles, salary_long = prepare_data(
+                salary_df, stats_2023, stats_2024, stats_2025, titles_df
+            )
             
-            best_model, best_model_name, scaler, feature_cols, results, ml_df = train_models(ml_data)
+            best_model, best_model_name, scaler, feature_cols, results, ml_df = train_models(merged_df)
             
             st.session_state.model_trained = True
             st.session_state.best_model = best_model
@@ -372,7 +406,7 @@ if data_loaded:
             st.session_state.scaler = scaler
             st.session_state.feature_cols = feature_cols
             st.session_state.stats_all_with_titles = stats_all_with_titles
-            st.session_state.salary_data = salary_data
+            st.session_state.salary_long = salary_long
             st.session_state.results = results
             st.session_state.ml_df = ml_df
     
@@ -471,16 +505,16 @@ if data_loaded:
                     predicted_salary = np.expm1(predicted_salary_log)
                     
                     # 前年の年俸を取得
-                    previous_salary_data = st.session_state.salary_data[
-                        (st.session_state.salary_data['選手名'] == selected_player) &
-                        (st.session_state.salary_data['年度'] == stats_year)
+                    previous_salary_data = st.session_state.salary_long[
+                        (st.session_state.salary_long['選手名'] == selected_player) &
+                        (st.session_state.salary_long['年度'] == stats_year)
                     ]
                     previous_salary = previous_salary_data['年俸_円'].values[0] if not previous_salary_data.empty else None
                     
                     # 実際の年俸を取得
-                    actual_salary_data = st.session_state.salary_data[
-                        (st.session_state.salary_data['選手名'] == selected_player) &
-                        (st.session_state.salary_data['年度'] == predict_year)
+                    actual_salary_data = st.session_state.salary_long[
+                        (st.session_state.salary_long['選手名'] == selected_player) &
+                        (st.session_state.salary_long['年度'] == predict_year)
                     ]
                     actual_salary = actual_salary_data['年俸_円'].values[0] if not actual_salary_data.empty else None
                     
@@ -525,7 +559,7 @@ if data_loaded:
                     st.markdown("---")
                     st.subheader(f"{stats_year}年の成績")
                     
-                    col1, col2, col3, col4, col5 = st.columns(5)
+                    col1, col2, col3, col4 = st.columns(4)
                     with col1:
                         st.metric("試合", int(player_stats['試合']))
                         st.metric("打率", f"{player_stats['打率']:.3f}")
@@ -538,16 +572,14 @@ if data_loaded:
                     with col4:
                         st.metric("打点", int(player_stats['打点']))
                         st.metric("タイトル数", int(player_stats['タイトル数']))
-                    with col5:
-                        st.metric("年齢", f"{int(player_stats['年齢'])}歳")
                     
                     st.markdown("---")
                     col1, col2 = st.columns(2)
                     
                     with col1:
                         fig1, ax1 = plt.subplots(figsize=(8, 5))
-                        player_salary_history = st.session_state.salary_data[
-                            st.session_state.salary_data['選手名'] == selected_player
+                        player_salary_history = st.session_state.salary_long[
+                            st.session_state.salary_long['選手名'] == selected_player
                         ].sort_values('年度')
                         
                         if not player_salary_history.empty:
@@ -640,214 +672,222 @@ if data_loaded:
                         predicted_salary = np.expm1(predicted_salary_log)
                         
                         # 前年（2024年）の年俸を取得
-                        previous_salary_data = st.session_state.salary_data[
-                            (st.session_state.salary_data['選手名'] == player) &
-                            (st.session_state.salary_data['年度'] == 2024)
-]
-previous_salary = previous_salary_data['年俸_円'].values[0] if not previous_salary_data.empty else None
-
-# 減額制限チェック
-                    is_limited = False
-                    display_salary = predicted_salary
-                    if previous_salary is not None:
-                        is_limited, min_salary, reduction_rate = check_salary_reduction_limit(predicted_salary, previous_salary)
-                        if is_limited:
-                            display_salary = min_salary
+                        previous_salary_data = st.session_state.salary_long[
+                            (st.session_state.salary_long['選手名'] == player) &
+                            (st.session_state.salary_long['年度'] == 2024)
+                        ]
+                        previous_salary = previous_salary_data['年俸_円'].values[0] if not previous_salary_data.empty else None
+                        
+                        # 減額制限チェック
+                        is_limited = False
+                        display_salary = predicted_salary
+                        if previous_salary is not None:
+                            is_limited, min_salary, reduction_rate = check_salary_reduction_limit(predicted_salary, previous_salary)
+                            if is_limited:
+                                display_salary = min_salary
+                        
+                        results_list.append({
+                            '選手名': player,
+                            '前年年俸': previous_salary / 1e6 if previous_salary else None,
+                            '予測年俸（制限前）': predicted_salary / 1e6,
+                            '予測年俸（制限後）': display_salary / 1e6,
+                            '減額制限': 'あり' if is_limited else 'なし',
+                            '打率': player_stats['打率'],
+                            '本塁打': int(player_stats['本塁打']),
+                            '打点': int(player_stats['打点']),
+                            'タイトル数': int(player_stats['タイトル数'])
+                        })
+                
+                if results_list:
+                    df_results = pd.DataFrame(results_list)
                     
-                    results_list.append({
-                        '選手名': player,
-                        '前年年俸': previous_salary / 1e6 if previous_salary else None,
-                        '予測年俸（制限前）': predicted_salary / 1e6,
-                        '予測年俸（制限後）': display_salary / 1e6,
-                        '減額制限': 'あり' if is_limited else 'なし',
-                        '打率': player_stats['打率'],
-                        '本塁打': int(player_stats['本塁打']),
-                        '打点': int(player_stats['打点']),
-                        'タイトル数': int(player_stats['タイトル数']),
-                        '年齢': f"{int(player_stats['年齢'])}歳"
-                    })
+                    st.dataframe(
+                        df_results,
+                        use_container_width=True,
+                        hide_index=True,
+                        height=None
+                    )
+                    
+                    # 減額制限に引っかかった選手を表示
+                    limited_players = df_results[df_results['減額制限'] == '⚠️']
+                    if not limited_players.empty:
+                        st.warning("⚖️ **減額制限に引っかかった選手:**")
+                        for _, row in limited_players.iterrows():
+                            st.write(f"- **{row['選手名']}**: 予測{row['予測年俸（制限前）']:.1f}百万円 → 制限後{row['予測年俸（制限後）']:.1f}百万円")
+                    
+                    st.markdown("---")
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        fig1, ax1 = plt.subplots(figsize=(8, 5))
+                        
+                        x = np.arange(len(df_results))
+                        width = 0.35
+                        
+                        ax1.barh(x - width/2, df_results['予測年俸（制限前）'], width, label='予測年俸（制限前）', alpha=0.7, color='steelblue')
+                        ax1.barh(x + width/2, df_results['予測年俸（制限後）'], width, label='予測年俸（制限後）', alpha=0.7, color='orange')
+                        
+                        ax1.set_yticks(x)
+                        ax1.set_yticklabels(df_results['選手名'])
+                        ax1.set_xlabel('予測年俸（百万円）', fontweight='bold')
+                        ax1.set_title('予測年俸比較', fontweight='bold')
+                        ax1.legend()
+                        ax1.grid(axis='x', alpha=0.3)
+                        st.pyplot(fig1)
+                        plt.close(fig1)
+                    
+                    with col2:
+                        fig2, ax2 = plt.subplots(figsize=(8, 5))
+                        x = np.arange(len(df_results))
+                        width = 0.25
+                        
+                        ax2.bar(x - width, df_results['打率']*100, width, label='打率 x100', alpha=0.8)
+                        ax2.bar(x, df_results['本塁打'], width, label='本塁打', alpha=0.8)
+                        ax2.bar(x + width, df_results['打点']/10, width, label='打点 /10', alpha=0.8)
+                        
+                        ax2.set_xlabel('選手', fontweight='bold')
+                        ax2.set_ylabel('値（正規化）', fontweight='bold')
+                        ax2.set_title('成績比較', fontweight='bold')
+                        ax2.set_xticks(x)
+                        ax2.set_xticklabels(df_results['選手名'], rotation=45, ha='right')
+                        ax2.legend()
+                        ax2.grid(axis='y', alpha=0.3)
+                        st.pyplot(fig2)
+                        plt.close(fig2)
+        else:
+            st.info("👆 2人以上の選手を選択してください")
+    
+    # モデル性能
+    elif menu == "📈 モデル性能":
+        st.header("📈 モデル性能")
+        
+        model_data = []
+        for name, result in st.session_state.results.items():
+            model_data.append({
+                'モデル': name,
+                'MAE（百万円）': f"{result['MAE']/1e6:.2f}",
+                'R²スコア': f"{result['R2']:.4f}"
+            })
+        
+        df_models = pd.DataFrame(model_data).sort_values('R²スコア', ascending=False)
+        st.dataframe(
+            df_models,
+            use_container_width=False,
+            hide_index=True
+        )
+        st.success(f"🏆 最良モデル: {st.session_state.best_model_name}")
+        
+        if st.session_state.best_model_name == 'ランダムフォレスト':
+            st.markdown("---")
+            st.subheader("特徴量重要度 Top 10")
             
-            if results_list:
-                df_results = pd.DataFrame(results_list)
-                
-                st.dataframe(
-                    df_results,
-                    use_container_width=True,
-                    hide_index=True,
-                    height=None
-                )
-                
-                # 減額制限に引っかかった選手を表示
-                limited_players = df_results[df_results['減額制限'] == 'あり']
-                if not limited_players.empty:
-                    st.warning("⚖️ **減額制限に引っかかった選手:**")
-                    for _, row in limited_players.iterrows():
-                        st.write(f"- **{row['選手名']}**: 予測{row['予測年俸（制限前）']:.1f}百万円 → 制限後{row['予測年俸（制限後）']:.1f}百万円")
-                
-                st.markdown("---")
-                col1, col2 = st.columns(2)
-                
-                with col1:
-                    fig1, ax1 = plt.subplots(figsize=(8, 5))
-                    
-                    x = np.arange(len(df_results))
-                    width = 0.35
-                    
-                    ax1.barh(x - width/2, df_results['予測年俸（制限前）'], width, label='予測年俸（制限前）', alpha=0.7, color='steelblue')
-                    ax1.barh(x + width/2, df_results['予測年俸（制限後）'], width, label='予測年俸（制限後）', alpha=0.7, color='orange')
-                    
-                    ax1.set_yticks(x)
-                    ax1.set_yticklabels(df_results['選手名'])
-                    ax1.set_xlabel('予測年俸（百万円）', fontweight='bold')
-                    ax1.set_title('予測年俸比較', fontweight='bold')
-                    ax1.legend()
-                    ax1.grid(axis='x', alpha=0.3)
-                    st.pyplot(fig1)
-                    plt.close(fig1)
-                
-                with col2:
-                    fig2, ax2 = plt.subplots(figsize=(8, 5))
-                    x = np.arange(len(df_results))
-                    width = 0.25
-                    
-                    ax2.bar(x - width, df_results['打率']*100, width, label='打率 x100', alpha=0.8)
-                    ax2.bar(x, df_results['本塁打'], width, label='本塁打', alpha=0.8)
-                    ax2.bar(x + width, df_results['打点']/10, width, label='打点 /10', alpha=0.8)
-                    
-                    ax2.set_xlabel('選手', fontweight='bold')
-                    ax2.set_ylabel('値（正規化）', fontweight='bold')
-                    ax2.set_title('成績比較', fontweight='bold')
-                    ax2.set_xticks(x)
-                    ax2.set_xticklabels(df_results['選手名'], rotation=45, ha='right')
-                    ax2.legend()
-                    ax2.grid(axis='y', alpha=0.3)
-                    st.pyplot(fig2)
-                    plt.close(fig2)
-    else:
-        st.info("👆 2人以上の選手を選択してください")
-
-# モデル性能
-elif menu == "📈 モデル性能":
-    st.header("📈 モデル性能")
+            feature_importance = pd.DataFrame({
+                '特徴量': st.session_state.feature_cols,
+                '重要度': st.session_state.best_model.feature_importances_
+            }).sort_values('重要度', ascending=False).head(10)
+            
+            fig, ax = plt.subplots(figsize=(10, 6))
+            ax.barh(range(len(feature_importance)), feature_importance['重要度'], color='#9b59b6', alpha=0.7)
+            ax.set_yticks(range(len(feature_importance)))
+            ax.set_yticklabels(feature_importance['特徴量'])
+            ax.set_xlabel('重要度', fontweight='bold')
+            ax.set_title('特徴量重要度 Top 10', fontweight='bold')
+            ax.grid(axis='x', alpha=0.3)
+            ax.invert_yaxis()
+            st.pyplot(fig)
+            plt.close(fig)
     
-    model_data = []
-    for name, result in st.session_state.results.items():
-        model_data.append({
-            'モデル': name,
-            'MAE（百万円）': f"{result['MAE']/1e6:.2f}",
-            'R²スコア': f"{result['R2']:.4f}"
-        })
-    
-    df_models = pd.DataFrame(model_data).sort_values('R²スコア', ascending=False)
-    st.dataframe(
-        df_models,
-        use_container_width=False,
-        hide_index=True
-    )
-    st.success(f"🏆 最良モデル: {st.session_state.best_model_name}")
-    
-    if st.session_state.best_model_name == 'ランダムフォレスト':
+    # 要因分析
+    elif menu == "📉 要因分析":
+        st.header("📉 要因分析")
+        
+        st.subheader("タイトル獲得の影響")
+        title_groups = st.session_state.ml_df.groupby(
+            st.session_state.ml_df['タイトル数'] > 0
+        )['年俸_円'].agg(['count', 'mean', 'median'])
+        
+        title_groups['mean'] = title_groups['mean'] / 1e6
+        title_groups['median'] = title_groups['median'] / 1e6
+        title_groups.index = ['タイトル無し', 'タイトル有り']
+        title_groups.columns = ['選手数', '平均年俸（百万円）', '中央値（百万円）']
+        
+        st.dataframe(
+            title_groups,
+            use_container_width=False
+        )
+        
+        if len(title_groups) == 2:
+            diff = title_groups.loc['タイトル有り', '平均年俸（百万円）'] - title_groups.loc['タイトル無し', '平均年俸（百万円）']
+            st.metric("タイトル獲得による年俸増加", f"{diff:.1f}百万円")
+        
         st.markdown("---")
-        st.subheader("特徴量重要度 Top 10")
+        st.subheader("主要指標との相関")
         
-        feature_importance = pd.DataFrame({
-            '特徴量': st.session_state.feature_cols,
-            '重要度': st.session_state.best_model.feature_importances_
-        }).sort_values('重要度', ascending=False).head(10)
+        correlations = st.session_state.ml_df[
+            ['打率', '本塁打', '打点', '出塁率', '長打率', 'タイトル数', '年俸_円']
+        ].corr()['年俸_円'].sort_values(ascending=False)
         
-        fig, ax = plt.subplots(figsize=(10, 6))
-        ax.barh(range(len(feature_importance)), feature_importance['重要度'], color='#9b59b6', alpha=0.7)
-        ax.set_yticks(range(len(feature_importance)))
-        ax.set_yticklabels(feature_importance['特徴量'])
-        ax.set_xlabel('重要度', fontweight='bold')
-        ax.set_title('特徴量重要度 Top 10', fontweight='bold')
-        ax.grid(axis='x', alpha=0.3)
-        ax.invert_yaxis()
-        st.pyplot(fig)
-        plt.close(fig)
+        corr_data = []
+        for idx, val in correlations.items():
+            if idx != '年俸_円':
+                corr_data.append({'指標': idx, '相関係数': f"{val:.4f}"})
+        
+        st.dataframe(
+            pd.DataFrame(corr_data),
+            use_container_width=False,
+            hide_index=True
+        )
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            fig1, ax1 = plt.subplots(figsize=(8, 5))
+            ax1.scatter(st.session_state.ml_df['打率'], st.session_state.ml_df['年俸_円']/1e6, alpha=0.5)
+            ax1.set_xlabel('打率', fontweight='bold')
+            ax1.set_ylabel('年俸（百万円）', fontweight='bold')
+            ax1.set_title('打率と年俸の関係', fontweight='bold')
+            ax1.grid(alpha=0.3)
+            st.pyplot(fig1)
+            plt.close(fig1)
+        
+        with col2:
+            fig2, ax2 = plt.subplots(figsize=(8, 5))
+            ax2.scatter(st.session_state.ml_df['本塁打'], st.session_state.ml_df['年俸_円']/1e6, alpha=0.5, color='orange')
+            ax2.set_xlabel('本塁打', fontweight='bold')
+            ax2.set_ylabel('年俸（百万円）', fontweight='bold')
+            ax2.set_title('本塁打と年俸の関係', fontweight='bold')
+            ax2.grid(alpha=0.3)
+            st.pyplot(fig2)
+            plt.close(fig2)
 
-# 要因分析
-elif menu == "📉 要因分析":
-    st.header("📉 要因分析")
+else:
+    # ファイル未アップロード時
+    st.info("📁 CSVファイルが見つかりませんでした")
+    st.markdown("""
+    ### データ配置方法
     
-    st.subheader("タイトル獲得の影響")
-    title_groups = st.session_state.ml_df.groupby(
-        st.session_state.ml_df['タイトル数'] > 0
-    )['年俸_円'].agg(['count', 'mean', 'median'])
+    以下のいずれかの方法でデータを用意してください：
     
-    title_groups['mean'] = title_groups['mean'] / 1e6
-    title_groups['median'] = title_groups['median'] / 1e6
-    title_groups.index = ['タイトル無し', 'タイトル有り']
-    title_groups.columns = ['選手数', '平均年俸（百万円）', '中央値（百万円）']
+    **方法1: dataフォルダに配置**
+    ```
+    data/
+    ├── salary_2023&2024&2025.csv
+    ├── stats_2023.csv
+    ├── stats_2024.csv
+    ├── stats_2025.csv
+    └── titles_2023&2024&2025.csv
+    ```
     
-    st.dataframe(
-        title_groups,
-        use_container_width=False
-    )
+    **方法2: 左サイドバーから手動アップロード**
     
-    if len(title_groups) == 2:
-        diff = title_groups.loc['タイトル有り', '平均年俸（百万円）'] - title_groups.loc['タイトル無し', '平均年俸（百万円）']
-        st.metric("タイトル獲得による年俸増加", f"{diff:.1f}百万円")
-    
-    st.markdown("---")
-    st.subheader("主要指標との相関")
-    
-    correlations = st.session_state.ml_df[
-        ['打率', '本塁打', '打点', '出塁率', '長打率', 'タイトル数', '年齢', '年俸_円']
-    ].corr()['年俸_円'].sort_values(ascending=False)
-    
-    corr_data = []
-    for idx, val in correlations.items():
-        if idx != '年俸_円':
-            corr_data.append({'指標': idx, '相関係数': f"{val:.4f}"})
-    
-    st.dataframe(
-        pd.DataFrame(corr_data),
-        use_container_width=False,
-        hide_index=True
-    )
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        fig1, ax1 = plt.subplots(figsize=(8, 5))
-        ax1.scatter(st.session_state.ml_df['打率'], st.session_state.ml_df['年俸_円']/1e6, alpha=0.5)
-        ax1.set_xlabel('打率', fontweight='bold')
-        ax1.set_ylabel('年俸（百万円）', fontweight='bold')
-        ax1.set_title('打率と年俸の関係', fontweight='bold')
-        ax1.grid(alpha=0.3)
-        st.pyplot(fig1)
-        plt.close(fig1)
-    
-    with col2:
-        fig2, ax2 = plt.subplots(figsize=(8, 5))
-        ax2.scatter(st.session_state.ml_df['本塁打'], st.session_state.ml_df['年俸_円']/1e6, alpha=0.5, color='orange')
-        ax2.set_xlabel('本塁打', fontweight='bold')
-        ax2.set_ylabel('年俸（百万円）', fontweight='bold')
-        ax2.set_title('本塁打と年俸の関係', fontweight='bold')
-        ax2.grid(alpha=0.3)
-        st.pyplot(fig2)
-        plt.close(fig2)
-	else:
-	# ファイル未アップロード時
-	st.info("📁 CSVファイルが見つかりませんでした")
-	st.markdown("""
-	### データ配置方法
-	以下のいずれかの方法でデータを用意してください：
+    ### 🚀 機能
+    - ⚾ 選手個別の年俸予測（対数変換による精度向上）
+    - 📊 複数選手の比較分析
+    - 📈 予測モデルの性能評価
+    - 📉 年俸影響要因の分析
+    - ⚖️ NPB減額制限ルールの適用
+    """)
 
-	**方法1: dataフォルダに配置**
-	data/
-    	├── merged_stats_salary_age.csv
-    	└── titles_2023&2024&2025.csv
-	**方法2: 左サイドバーから手動アップロード**
-
-	### 🚀 機能
-	- ⚾ 選手個別の年俸予測（対数変換による精度向上）
-	- 📊 複数選手の比較分析
-	- 📈 予測モデルの性能評価
-	- 📉 年俸影響要因の分析
-	- ⚖️ NPB減額制限ルールの適用
-	- 👤 年齢を考慮した予測
-	""")
-	st.markdown("---")
-	st.markdown("NPB選手年俸予測システム（対数変換版 + 減額制限対応 + 年齢考慮） - Powered by Streamlit")
+# フッター
+st.markdown("---")
+st.markdown("*NPB選手年俸予測システム（対数変換版 + 減額制限対応） - Powered by Streamlit*")
