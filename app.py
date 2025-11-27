@@ -39,7 +39,7 @@ st.markdown("""
 
 /* サイドバーのユーザーコンテンツエリア */
 [data-testid="stSidebarUserContent"] {
-    padding-top: 3rem !important;  /* 少し余白を戻す */
+    padding-top: 3rem !important;
     margin-top: 0 !important;
 }
 
@@ -88,14 +88,13 @@ st.markdown("""
 }
 
 /* ====== メインエリア ====== */
-/* ← ここがポイント：幅の「揺れ」を完全固定する */
 .main {
     margin-left: 280px !important;
 }
 
 /* メインの最大幅を固定（揺れ防止） */
 .block-container {
-    max-width: 1400px !important;   /* 広すぎず狭すぎない最適値 */
+    max-width: 1400px !important;
     padding-top: 2rem !important;
 }
 
@@ -105,7 +104,7 @@ st.markdown("""
 }
 
 table {
-    table-layout: fixed !important;   /* ←コレで揺れ完全停止 */
+    table-layout: fixed !important;
     width: 100% !important;
 }
 
@@ -163,7 +162,6 @@ h1:hover a, h2:hover a, h3:hover a, h4:hover a, h5:hover a, h6:hover a {
 </style>
 """, unsafe_allow_html=True)
 
-
 # CSSでアニメーションを無効化
 st.markdown("""
 <style>
@@ -193,8 +191,34 @@ try:
     import japanize_matplotlib
     plt.rcParams["font.family"] = "IPAexGothic"
 except ImportError:
-    # フォールバック
     plt.rcParams['font.sans-serif'] = ['DejaVu Sans', 'Arial Unicode MS', 'sans-serif']
+
+# 減額制限計算関数
+def calculate_salary_limit(previous_salary):
+    """
+    NPBの減額制限を計算する
+    1億円以上: 40%まで減額可能（最低60%）
+    1億円未満: 25%まで減額可能（最低75%）
+    """
+    if previous_salary >= 100_000_000:  # 1億円以上
+        reduction_rate = 0.40
+        min_salary = previous_salary * 0.60
+    else:  # 1億円未満
+        reduction_rate = 0.25
+        min_salary = previous_salary * 0.75
+    
+    return min_salary, reduction_rate
+
+def check_salary_reduction_limit(predicted_salary, previous_salary):
+    """
+    予測年俸が減額制限に引っかかるかチェック
+    """
+    min_salary, reduction_rate = calculate_salary_limit(previous_salary)
+    
+    if predicted_salary < min_salary:
+        return True, min_salary, reduction_rate
+    else:
+        return False, min_salary, reduction_rate
 
 # タイトル
 st.title("⚾ NPB選手年俸予測システム")
@@ -259,11 +283,9 @@ if not data_loaded:
 @st.cache_data
 def prepare_data(_salary_df, _stats_2023, _stats_2024, _stats_2025, _titles_df):
     """データの前処理を行う"""
-    # タイトルデータの前処理
     titles_df_clean = _titles_df.dropna(subset=['選手名'])
     title_summary = titles_df_clean.groupby(['選手名', '年度']).size().reset_index(name='タイトル数')
     
-    # 成績データの統合
     stats_2023_copy = _stats_2023.copy()
     stats_2024_copy = _stats_2024.copy()
     stats_2025_copy = _stats_2025.copy()
@@ -274,7 +296,6 @@ def prepare_data(_salary_df, _stats_2023, _stats_2024, _stats_2025, _titles_df):
     
     stats_all = pd.concat([stats_2023_copy, stats_2024_copy, stats_2025_copy], ignore_index=True)
     
-    # 年俸データの整形
     df_2023 = _salary_df[['選手名_2023', '年俸_円_2023']].copy()
     df_2023['年度'] = 2023
     df_2023.rename(columns={'選手名_2023': '選手名', '年俸_円_2023': '年俸_円'}, inplace=True)
@@ -293,7 +314,6 @@ def prepare_data(_salary_df, _stats_2023, _stats_2024, _stats_2025, _titles_df):
     salary_long = salary_long.sort_values('年俸_円', ascending=False)
     salary_long = salary_long.drop_duplicates(subset=['選手名', '年度'], keep='first')
     
-    # データ結合
     stats_all['予測年度'] = stats_all['年度'] + 1
     merged_df = pd.merge(stats_all, title_summary, on=['選手名', '年度'], how='left')
     merged_df['タイトル数'] = merged_df['タイトル数'].fillna(0)
@@ -307,7 +327,6 @@ def prepare_data(_salary_df, _stats_2023, _stats_2024, _stats_2025, _titles_df):
     merged_df = merged_df.drop(columns=['年度_年俸', '予測年度'])
     merged_df.rename(columns={'年度_成績': '成績年度'}, inplace=True)
     
-    # 予測用データ
     stats_all_with_titles = pd.merge(stats_all, title_summary, on=['選手名', '年度'], how='left')
     stats_all_with_titles['タイトル数'] = stats_all_with_titles['タイトル数'].fillna(0)
     
@@ -327,23 +346,19 @@ def train_models(_merged_df):
     X = ml_df[feature_cols]
     y = ml_df['年俸_円']
     
-    # 【対数変換】年俸を対数変換
-    y_log = np.log1p(y)  # log(1 + y) で0や小さい値にも対応
+    y_log = np.log1p(y)
     
     X_train, X_test, y_train_log, y_test_log = train_test_split(
         X, y_log, test_size=0.2, random_state=42
     )
     
-    # 元の年俸も保持（評価用）
     y_train_original = np.expm1(y_train_log)
     y_test_original = np.expm1(y_test_log)
     
-    # スケーラー
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
     
-    # モデル訓練
     models = {
         '線形回帰': LinearRegression(),
         'ランダムフォレスト': RandomForestRegressor(n_estimators=100, random_state=42, max_depth=10),
@@ -359,10 +374,8 @@ def train_models(_merged_df):
             model.fit(X_train, y_train_log)
             y_pred_log = model.predict(X_test)
         
-        # 対数から元のスケールに戻す
         y_pred = np.expm1(y_pred_log)
         
-        # 元のスケールで評価
         mae = mean_absolute_error(y_test_original, y_pred)
         r2 = r2_score(y_test_original, y_pred)
         
@@ -387,7 +400,6 @@ if data_loaded:
             
             best_model, best_model_name, scaler, feature_cols, results, ml_df = train_models(merged_df)
             
-            # セッション状態に保存
             st.session_state.model_trained = True
             st.session_state.best_model = best_model
             st.session_state.best_model_name = best_model_name
@@ -431,6 +443,10 @@ if data_loaded:
         - 📊 **複数選手比較**: 最大5人の選手を比較
         - 📈 **モデル性能**: 予測モデルの詳細情報
         - 📉 **要因分析**: 年俸に影響を与える要因の分析
+        
+        ### ⚖️ NPB減額制限ルール
+        - **1億円以上**: 最大40%まで減額可能（最低60%保証）
+        - **1億円未満**: 最大25%まで減額可能（最低75%保証）
         """)
     
     # 選手検索・予測
@@ -491,9 +507,16 @@ if data_loaded:
                     else:
                         predicted_salary_log = st.session_state.best_model.predict(features)[0]
                     
-                    # 対数から元のスケールに戻す
                     predicted_salary = np.expm1(predicted_salary_log)
                     
+                    # 前年の年俸を取得
+                    previous_salary_data = st.session_state.salary_long[
+                        (st.session_state.salary_long['選手名'] == selected_player) &
+                        (st.session_state.salary_long['年度'] == stats_year)
+                    ]
+                    previous_salary = previous_salary_data['年俸_円'].values[0] if not previous_salary_data.empty else None
+                    
+                    # 実際の年俸を取得
                     actual_salary_data = st.session_state.salary_long[
                         (st.session_state.salary_long['選手名'] == selected_player) &
                         (st.session_state.salary_long['年度'] == predict_year)
@@ -502,17 +525,40 @@ if data_loaded:
                     
                     st.success("✅ 予測完了！")
                     
-                    col1, col2, col3 = st.columns(3)
+                    # 減額制限チェック
+                    if previous_salary is not None:
+                        is_limited, min_salary, reduction_rate = check_salary_reduction_limit(predicted_salary, previous_salary)
+                        
+                        if is_limited:
+                            st.warning(f"""
+                            ⚖️ **減額制限に引っかかります**
+                            - 前年年俸: {previous_salary/1e6:.1f}百万円
+                            - 予測年俸: {predicted_salary/1e6:.1f}百万円
+                            - 減額制限: {reduction_rate*100:.0f}%まで（最低{(1-reduction_rate)*100:.0f}%保証）
+                            - **制限後の最低年俸: {min_salary/1e6:.1f}百万円**
+                            """)
+                            display_salary = min_salary
+                        else:
+                            display_salary = predicted_salary
+                    else:
+                        display_salary = predicted_salary
+                    
+                    col1, col2, col3, col4 = st.columns(4)
                     with col1:
-                        st.metric("予測年俸", f"{predicted_salary/1e6:.1f}百万円")
+                        if previous_salary is not None:
+                            st.metric("前年年俸", f"{previous_salary/1e6:.1f}百万円")
+                        else:
+                            st.metric("前年年俸", "データなし")
                     with col2:
+                        st.metric("予測年俸", f"{predicted_salary/1e6:.1f}百万円")
+                    with col3:
                         if actual_salary:
                             st.metric("実際の年俸", f"{actual_salary/1e6:.1f}百万円")
                         else:
                             st.metric("実際の年俸", "データなし")
-                    with col3:
+                    with col4:
                         if actual_salary:
-                            error = abs(predicted_salary - actual_salary) / actual_salary * 100
+                            error = abs(display_salary - actual_salary) / actual_salary * 100
                             st.metric("予測誤差", f"{error:.1f}%")
                     
                     st.markdown("---")
@@ -545,9 +591,13 @@ if data_loaded:
                             years = player_salary_history['年度'].values
                             salaries = player_salary_history['年俸_円'].values / 1e6
                             ax1.plot(years, salaries, 'o-', linewidth=2, markersize=8, label='実際の年俸')
-                            ax1.plot(predict_year, predicted_salary/1e6, 'r*', markersize=20, label='予測年俸')
+                            ax1.plot(predict_year, predicted_salary/1e6, 'r*', markersize=20, label='予測年俸（制限前）')
+                            
+                            if previous_salary is not None and is_limited:
+                                ax1.plot(predict_year, display_salary/1e6, 'orange', marker='D', markersize=12, label='制限後年俸')
+                            
                             if actual_salary:
-                                ax1.plot(predict_year, actual_salary/1e6, 'go', markersize=12, label='実際の年俸(2025)')
+                                ax1.plot(predict_year, actual_salary/1e6, 'go', markersize=12, label=f'実際の年俸({predict_year})')
                             
                             ax1.set_xlabel('年度', fontweight='bold')
                             ax1.set_ylabel('年俸（百万円）', fontweight='bold')
@@ -624,12 +674,29 @@ if data_loaded:
                         else:
                             predicted_salary_log = st.session_state.best_model.predict(features)[0]
                         
-                        # 対数から元のスケールに戻す
                         predicted_salary = np.expm1(predicted_salary_log)
+                        
+                        # 前年（2024年）の年俸を取得
+                        previous_salary_data = st.session_state.salary_long[
+                            (st.session_state.salary_long['選手名'] == player) &
+                            (st.session_state.salary_long['年度'] == 2024)
+                        ]
+                        previous_salary = previous_salary_data['年俸_円'].values[0] if not previous_salary_data.empty else None
+                        
+                        # 減額制限チェック
+                        is_limited = False
+                        display_salary = predicted_salary
+                        if previous_salary is not None:
+                            is_limited, min_salary, reduction_rate = check_salary_reduction_limit(predicted_salary, previous_salary)
+                            if is_limited:
+                                display_salary = min_salary
                         
                         results_list.append({
                             '選手名': player,
-                            '予測年俸': predicted_salary / 1e6,
+                            '前年年俸': previous_salary / 1e6 if previous_salary else None,
+                            '予測年俸（制限前）': predicted_salary / 1e6,
+                            '予測年俸（制限後）': display_salary / 1e6,
+                            '減額制限': '⚠️' if is_limited else '✓',
                             '打率': player_stats['打率'],
                             '本塁打': int(player_stats['本塁打']),
                             '打点': int(player_stats['打点']),
@@ -641,18 +708,35 @@ if data_loaded:
                     
                     st.dataframe(
                         df_results,
-                        use_container_width=False,
+                        use_container_width=True,
                         hide_index=True,
                         height=None
                     )
                     
+                    # 減額制限に引っかかった選手を表示
+                    limited_players = df_results[df_results['減額制限'] == '⚠️']
+                    if not limited_players.empty:
+                        st.warning("⚖️ **減額制限に引っかかった選手:**")
+                        for _, row in limited_players.iterrows():
+                            st.write(f"- **{row['選手名']}**: 予測{row['予測年俸（制限前）']:.1f}百万円 → 制限後{row['予測年俸（制限後）']:.1f}百万円")
+                    
+                    st.markdown("---")
                     col1, col2 = st.columns(2)
                     
                     with col1:
                         fig1, ax1 = plt.subplots(figsize=(8, 5))
-                        ax1.barh(df_results['選手名'], df_results['予測年俸'], alpha=0.7, color='steelblue')
+                        
+                        x = np.arange(len(df_results))
+                        width = 0.35
+                        
+                        ax1.barh(x - width/2, df_results['予測年俸（制限前）'], width, label='予測年俸（制限前）', alpha=0.7, color='steelblue')
+                        ax1.barh(x + width/2, df_results['予測年俸（制限後）'], width, label='予測年俸（制限後）', alpha=0.7, color='orange')
+                        
+                        ax1.set_yticks(x)
+                        ax1.set_yticklabels(df_results['選手名'])
                         ax1.set_xlabel('予測年俸（百万円）', fontweight='bold')
                         ax1.set_title('予測年俸比較', fontweight='bold')
+                        ax1.legend()
                         ax1.grid(axis='x', alpha=0.3)
                         st.pyplot(fig1)
                         plt.close(fig1)
@@ -807,8 +891,9 @@ else:
     - 📊 複数選手の比較分析
     - 📈 予測モデルの性能評価
     - 📉 年俸影響要因の分析
+    - ⚖️ NPB減額制限ルールの適用
     """)
 
 # フッター
 st.markdown("---")
-st.markdown("*NPB選手年俸予測システム（対数変換版） - Powered by Streamlit*")
+st.markdown("*NPB選手年俸予測システム（対数変換版 + 減額制限対応） - Powered by Streamlit*")
