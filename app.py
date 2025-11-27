@@ -421,19 +421,13 @@ if data_loaded:
     
    # ホーム
     if menu == "🏠 ホーム":
-        col1, col2, col3 = st.columns(3)
+        col1, col2, col3 = st.columns(1,2,1)
         with col1:
             st.metric("訓練データ数", f"{len(st.session_state.ml_df)}人")
         with col2:
             st.metric("採用モデル", st.session_state.best_model_name)
         with col3:
             st.metric("R²スコア", f"{st.session_state.results[st.session_state.best_model_name]['R2']:.4f}")
-
-        
-        st.markdown("---")
-        st.info("📊 **改良版**: 年俸を対数変換してから予測し、元のスケールに戻すことで予測精度が向上しました")
-        
-        st.markdown("---")
         st.subheader("📖 使い方")
         st.markdown("""
         1. **左サイドバー**のメニューから機能を選択
@@ -898,6 +892,7 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム（対数変換版 + 減額制限対応） - Powered by Streamlit*")
+
 
 
 
