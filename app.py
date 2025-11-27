@@ -846,8 +846,6 @@ if data_loaded:
             plt.close(fig2)
 
 else:
-    # ファイル未アップロード時（最後の部分）
-else:
     st.info("📁 CSVファイルが見つかりませんでした")
     st.markdown("""
     ### データ配置方法
