@@ -494,7 +494,6 @@ if data_loaded:
             st.session_state.salary_long = salary_long
             st.session_state.results = results
             st.session_state.ml_df = ml_df
-            st.session_state.feature_weights = feature_weight
     
     # メインコンテンツ
     st.sidebar.markdown("---")
@@ -1060,4 +1059,5 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム（対数変換 + 減額制限 + 重み付け対応） - Powered by Streamlit*")
+
 
