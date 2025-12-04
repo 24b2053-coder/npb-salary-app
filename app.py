@@ -1476,4 +1476,4 @@ else:
 
 # フッター
 st.markdown("---")
-st.markdown("*NPB選手年俸予測システム made by Sato&Kurokawa - Powered by Streamlit*")
+st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powered by Streamlit*")
