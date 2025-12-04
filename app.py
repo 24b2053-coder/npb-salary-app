@@ -532,8 +532,20 @@ if data_loaded:
                         is_limited, min_salary, reduction_rate = check_salary_reduction_limit(predicted_salary, previous_salary)
                         
                         if is_limited:
-                        st.pyplot(fig1)
-                        plt.close(fig1)
+                            st.warning(f"""
+                            ⚖️ **減額制限に引っかかります**
+                            - 前年年俸: {previous_salary/1e6:.1f}百万円
+                            - 予測年俸: {predicted_salary/1e6:.1f}百万円
+                            - 減額制限: {reduction_rate*100:.0f}%まで（最低{(1-reduction_rate)*100:.0f}%保証）
+                            - **制限後の最低年俸: {min_salary/1e6:.1f}百万円**
+                            """)
+                            display_salary = min_salary
+                        else:
+                            display_salary = predicted_salary
+                    else:
+                        display_salary = predicted_salary
+                    
+                    col1, col2, col3, col4 = st.columns(4)
                     
                     with col2:
                         fig2, ax2 = plt.subplots(figsize=(8, 5), subplot_kw=dict(projection='polar'))
@@ -1195,5 +1207,6 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム- Powered by Streamlit*")
+
 
 
