@@ -680,7 +680,7 @@ if data_loaded:
                     st.markdown("---")
                     st.subheader(f"{stats_year}年の成績")
                     
-                    col1, col2, col3, col4, col5 = st.columns(4)
+                    col1, col2, col3, col4, col5 = st.columns(5)
                     with col1:
                         st.metric("試合", int(player_stats['試合']))
                         st.metric("打率", f"{player_stats['打率']:.3f}")
@@ -1601,6 +1601,7 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
+
 
 
 
