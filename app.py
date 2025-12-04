@@ -606,6 +606,10 @@ if data_loaded:
                     actual_salary = actual_salary_data['年俸_円'].values[0] if not actual_salary_data.empty else None
                     
                     st.success("✅ 予測完了！")
+                    # モデル訓練後
+                    print("特徴量リスト:", st.session_state.feature_cols)
+                    print("特徴量数:", len(st.session_state.feature_cols))
+                    print("年齢が含まれているか:", '年齢' in st.session_state.feature_cols)
                     
                     # 減額制限チェック
                     if previous_salary is not None:
@@ -989,10 +993,6 @@ if data_loaded:
                     df_predictions = pd.DataFrame(model_predictions)
                     
                     st.success("✅ 全モデルでの予測完了！")
-                    # モデル訓練後
-                    print("特徴量リスト:", st.session_state.feature_cols)
-                    print("特徴量数:", len(st.session_state.feature_cols))
-                    print("年齢が含まれているか:", '年齢' in st.session_state.feature_cols)
                     
                     # メトリクス表示
                     col1, col2, col3 = st.columns(3)
@@ -1553,6 +1553,7 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powered by Streamlit*")
+
 
 
 
