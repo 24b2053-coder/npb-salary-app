@@ -356,7 +356,7 @@ else:
     stats_all_with_titles = pd.merge(stats_all, title_summary, on=['選手名', '年度'], how='left')
     stats_all_with_titles['タイトル数'] = stats_all_with_titles['タイトル数'].fillna(0)
     
-    return merged_df, stats_all_with_titles, salary_long
+return merged_df, stats_all_with_titles, salary_long
 
 # モデル訓練関数（対数変換版・年齢追加）
 @st.cache_resource
@@ -1487,4 +1487,5 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム - Powered by Streamlit*")
+
 
