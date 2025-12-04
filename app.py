@@ -1206,14 +1206,17 @@ if data_loaded:
             elif hits > at_bats:
                 st.error("❌ 安打は打数以下にしてください")
             else:
+                # ★ 塁打を計算 ★
+                total_bases = hits + doubles + triples * 2 + home_runs * 3
+        
                 # 特徴量を作成（年齢を含む23項目）
                 custom_features = np.array([[
                     games, plate_appearances, at_bats, runs, hits, 
-                    doubles, triples, home_runs, total_bases, rbis,  # ← total_basesを追加
+                    doubles, triples, home_runs, total_bases, rbis,
                     stolen_bases, caught_stealing, walks, hit_by_pitch, strikeouts,
-                    double_plays, avg, obp, slg, sac_hits, sac_flies, titles, age  # ← 最後にageを追加
+                    double_plays, avg, obp, slg, sac_hits, sac_flies, titles, age
                 ]])
-                
+        
                 # 全モデルで予測
                 st.success("✅ 予測完了！")
                 
@@ -1549,6 +1552,7 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powered by Streamlit*")
+
 
 
 
