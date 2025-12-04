@@ -238,28 +238,31 @@ def load_data():
         stats_2024 = pd.read_csv('data/stats_2024.csv')
         stats_2025 = pd.read_csv('data/stats_2025.csv')
         titles_df = pd.read_csv('data/titles_2023&2024&2025.csv')
-        return salary_df, stats_2023, stats_2024, stats_2025, titles_df, True
+        ages_df = pd.read_csv('data/player_ages.csv')
+        return salary_df, stats_2023, stats_2024, stats_2025, titles_df, ages_df, True
     except FileNotFoundError:
-        return None, None, None, None, None, False
+        return None, None, None, None, None, None, False
 
-salary_df, stats_2023, stats_2024, stats_2025, titles_df, data_loaded = load_data()
+salary_df, stats_2023, stats_2024, stats_2025, titles_df, ages_df, data_loaded = load_data()
 
 # ファイルアップロード処理
 if not data_loaded:
-    st.sidebar.markdown("**5つのCSVファイルを一度に選択してアップロード：**")
+    st.sidebar.markdown("**6つのCSVファイルを一度に選択してアップロード：**")
     uploaded_files = st.sidebar.file_uploader(
-        "CSVファイルを選択（5つ全て選択してください）",
+        "CSVファイルを選択（6つ全て選択してください）",
         type=['csv'],
         accept_multiple_files=True
     )
     
-    if uploaded_files and len(uploaded_files) == 5:
+    if uploaded_files and len(uploaded_files) == 6:
         file_dict = {}
         for file in uploaded_files:
             if 'salary' in file.name or '年俸' in file.name:
                 file_dict['salary'] = file
             elif 'titles' in file.name or 'タイトル' in file.name:
                 file_dict['titles'] = file
+            elif 'age' in file.name or '年齢' in file.name:
+                file_dict['ages'] = file
             elif '2023' in file.name:
                 file_dict['stats_2023'] = file
             elif '2024' in file.name:
@@ -267,21 +270,22 @@ if not data_loaded:
             elif '2025' in file.name:
                 file_dict['stats_2025'] = file
         
-        if len(file_dict) == 5:
+        if len(file_dict) == 6:
             salary_df = pd.read_csv(file_dict['salary'])
             stats_2023 = pd.read_csv(file_dict['stats_2023'])
             stats_2024 = pd.read_csv(file_dict['stats_2024'])
             stats_2025 = pd.read_csv(file_dict['stats_2025'])
             titles_df = pd.read_csv(file_dict['titles'])
+            ages_df = pd.read_csv(file_dict['ages'])
             data_loaded = True
         else:
             st.sidebar.error("❌ ファイル名が正しくありません")
     elif uploaded_files:
-        st.sidebar.warning(f"⚠️ {len(uploaded_files)}個のファイルが選択されています。5つ必要です。")
+        st.sidebar.warning(f"⚠️ {len(uploaded_files)}個のファイルが選択されています。6つ必要です。")
 
 # データ前処理関数
 @st.cache_data
-def prepare_data(_salary_df, _stats_2023, _stats_2024, _stats_2025, _titles_df):
+def prepare_data(_salary_df, _stats_2023, _stats_2024, _stats_2025, _titles_df, _ages_df):
     """データの前処理を行う"""
     titles_df_clean = _titles_df.dropna(subset=['選手名'])
     title_summary = titles_df_clean.groupby(['選手名', '年度']).size().reset_index(name='タイトル数')
@@ -307,6 +311,10 @@ def prepare_data(_salary_df, _stats_2023, _stats_2024, _stats_2025, _titles_df):
     df_2025 = _salary_df[['選手名_2024_2025', '年俸_円_2025']].copy()
     df_2025['年度'] = 2025
     df_2025.rename(columns={'選手名_2024_2025': '選手名', '年俸_円_2025': '年俸_円'}, inplace=True)
+
+    stats_all = pd.concat([stats_2023_copy, stats_2024_copy, stats_2025_copy], ignore_index=True)
+    # 年齢データをマージ
+    stats_all = pd.merge(stats_all, _ages_df, on=['選手名', '年度'], how='left')
     
     salary_long = pd.concat([df_2023, df_2024, df_2025], ignore_index=True)
     salary_long = salary_long.dropna(subset=['年俸_円'])
@@ -338,7 +346,7 @@ def train_models(_merged_df):
     """モデルを訓練する（対数変換適用）"""
     feature_cols = ['試合', '打席', '打数', '得点', '安打', '二塁打', '三塁打', '本塁打', 
                    '塁打', '打点', '盗塁', '盗塁刺', '四球', '死球', '三振', '併殺打', 
-                   '打率', '出塁率', '長打率', '犠打', '犠飛', 'タイトル数']
+                   '打率', '出塁率', '長打率', '犠打', '犠飛', 'タイトル数', '年齢']
     
     ml_df = _merged_df[feature_cols + ['年俸_円', '選手名', '成績年度']].copy()
     ml_df = ml_df.dropna()
@@ -395,7 +403,7 @@ if data_loaded:
     if not st.session_state.model_trained:
         with st.spinner('🤖 モデルを訓練中...'):
             merged_df, stats_all_with_titles, salary_long = prepare_data(
-                salary_df, stats_2023, stats_2024, stats_2025, titles_df
+                salary_df, stats_2023, stats_2024, stats_2025, titles_df, ages_df
             )
             
             best_model, best_model_name, scaler, feature_cols, results, ml_df = train_models(merged_df)
@@ -573,7 +581,7 @@ if data_loaded:
                         st.metric("長打率", f"{player_stats['長打率']:.3f}")
                     with col4:
                         st.metric("打点", int(player_stats['打点']))
-                        st.metric("タイトル数", int(player_stats['タイトル数']))
+                        st.metric("年齢", int(player_stats['年齢']) if pd.notna(player_stats['年齢']) else 'N/A')
                     
                     st.markdown("---")
                     col1, col2 = st.columns(2)
@@ -697,7 +705,7 @@ if data_loaded:
                             '打率': player_stats['打率'],
                             '本塁打': int(player_stats['本塁打']),
                             '打点': int(player_stats['打点']),
-                            'タイトル数': int(player_stats['タイトル数'])
+                            '年齢': int(player_stats['年齢']) if pd.notna(player_stats['年齢']) else None
                         })
                 
                 if results_list:
@@ -1333,7 +1341,7 @@ if data_loaded:
         st.subheader("主要指標との相関")
         
         correlations = st.session_state.ml_df[
-            ['打率', '本塁打', '打点', '出塁率', '長打率', 'タイトル数', '年俸_円']
+            ['打率', '本塁打', '打点', '出塁率', '長打率', '年齢', 'タイトル数', '年俸_円']
         ].corr()['年俸_円'].sort_values(ascending=False)
         
         corr_data = []
@@ -1384,7 +1392,8 @@ else:
     ├── stats_2023.csv
     ├── stats_2024.csv
     ├── stats_2025.csv
-    └── titles_2023&2024&2025.csv
+    ├── titles_2023&2024&2025.csv
+    └── player_ages.csv
     ```
     
     **方法2: 左サイドバーから手動アップロード**
@@ -1393,7 +1402,6 @@ else:
     - ⚾ 選手個別の年俸予測（対数変換による精度向上）
     - 📊 複数選手の比較分析
     - 🔬 複数モデルでの同時予測と比較
-    - ✏️ オリジナル選手データでの予測
     - 📈 予測モデルの性能評価
     - 📉 年俸影響要因の分析
     - ⚖️ NPB減額制限ルールの適用
@@ -1401,4 +1409,5 @@ else:
 
 # フッター
 st.markdown("---")
-st.markdown("*NPB選手年俸予測システム - Powered by Streamlit*")
+st.markdown("*NPB選手年俸予測システム（対数変換版 + 減額制限対応 + 年齢考慮） - Powered by Streamlit*")
+
