@@ -617,6 +617,10 @@ if data_loaded:
                             if actual_salary:
                                 ax1.plot(predict_year, actual_salary/1e6, 'go', markersize=12, label=f'実際の年俸({predict_year})')
                             
+                             min_year = years.min()
+                            max_year = max(max(years), int(predict_year))
+                            xticks = np.linspace(min_year, max_year, 3, dtype=int)
+                            ax1.set_xticks(xticks)   
                             ax1.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: int(x)))
                             ax1.set_xlabel('年度', fontweight='bold')
                             ax1.set_ylabel('年俸（百万円）', fontweight='bold')
@@ -1473,5 +1477,6 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム - Powered by Streamlit*")
+
 
 
