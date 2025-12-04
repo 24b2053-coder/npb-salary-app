@@ -890,4 +890,5 @@ else:
 
 # フッター
 st.markdown("---")
-st.markdown("*NPB選手年俸予測システム（対数変換版 + 減額制限対応） - Powered by Streamlit*")
+st.markdown("*NPB選手年俸予測システム- Powered by Streamlit*")
+
