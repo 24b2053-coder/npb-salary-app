@@ -1588,6 +1588,9 @@ st.markdown("---")
 st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powered by Streamlit*")
 
 
+# Streamlitアプリを再起動するか、以下のコマンドを実行
+st.cache_data.clear()
+st.cache_resource.clear()
 
 
 
