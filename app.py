@@ -1531,37 +1531,36 @@ if data_loaded:
             hide_index=True
         )
         
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            fig1, ax1 = plt.subplots(figsize=(8, 5))
-            ax1.scatter(st.session_state.ml_df['打率'], st.session_state.ml_df['年俸_円']/1e6, alpha=0.5)
-            ax1.set_xlabel('打率', fontweight='bold')
-            ax1.set_ylabel('年俸（百万円）', fontweight='bold')
-            ax1.set_title('打率と年俸の関係', fontweight='bold')
-            ax1.grid(alpha=0.3)
-            st.pyplot(fig1)
-            plt.close(fig1)
-        
-        with col2:
-            fig2, ax2 = plt.subplots(figsize=(8, 5))
-            ax2.scatter(st.session_state.ml_df['本塁打'], st.session_state.ml_df['年俸_円']/1e6, alpha=0.5, color='orange')
-            ax2.set_xlabel('本塁打', fontweight='bold')
-            ax2.set_ylabel('年俸（百万円）', fontweight='bold')
-            ax2.set_title('本塁打と年俸の関係', fontweight='bold')
-            ax2.grid(alpha=0.3)
-            st.pyplot(fig2)
-            plt.close(fig2)
+        # 1つ目
+        fig1, ax1 = plt.subplots(figsize=(8, 5))
+        ax1.scatter(st.session_state.ml_df['打率'], st.session_state.ml_df['年俸_円']/1e6, alpha=0.5)
+        ax1.set_xlabel('打率', fontweight='bold')
+        ax1.set_ylabel('年俸（百万円）', fontweight='bold')
+        ax1.set_title('打率と年俸の関係', fontweight='bold')
+        ax1.grid(alpha=0.3)
+        st.pyplot(fig1)
+        plt.close(fig1)
 
-        with col3:
-            fig3, ax3 = plt.subplots(figsize=(8, 5))
-            ax3.scatter(st.session_state.ml_df['年齢'], st.session_state.ml_df['年俸_円']/1e6, alpha=0.5, color='orange')
-            ax3.set_xlabel('年齢', fontweight='bold')
-            ax3.set_ylabel('年俸（百万円）', fontweight='bold')
-            ax3.set_title('年齢と年俸の関係', fontweight='bold')
-            ax3.grid(alpha=0.3)
-            st.pyplot(fig3)
-            plt.close(fig3)
+        # 2つ目
+        fig2, ax2 = plt.subplots(figsize=(8, 5))
+        ax2.scatter(st.session_state.ml_df['本塁打'], st.session_state.ml_df['年俸_円']/1e6, alpha=0.5, color='orange')
+        ax2.set_xlabel('本塁打', fontweight='bold')
+        ax2.set_ylabel('年俸（百万円）', fontweight='bold')
+        ax2.set_title('本塁打と年俸の関係', fontweight='bold')
+        ax2.grid(alpha=0.3)
+        st.pyplot(fig2)
+        plt.close(fig2)
+
+        # 3つ目
+        fig3, ax3 = plt.subplots(figsize=(8, 5))
+        ax3.scatter(st.session_state.ml_df['年齢'], st.session_state.ml_df['年俸_円']/1e6, alpha=0.5, color='orange')
+        ax3.set_xlabel('年齢', fontweight='bold')
+        ax3.set_ylabel('年俸（百万円）', fontweight='bold')
+        ax3.set_title('年齢と年俸の関係', fontweight='bold')
+        ax3.grid(alpha=0.3)
+        st.pyplot(fig3)
+        plt.close(fig3)
+
 
 else:
     # ファイル未アップロード時
@@ -1600,4 +1599,5 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
+
 
