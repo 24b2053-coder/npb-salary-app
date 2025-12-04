@@ -292,7 +292,7 @@ def prepare_data(_salary_df, _stats_2023, _stats_2024, _stats_2025, _titles_df, 
     """データの前処理を行う"""
     titles_df_clean = _titles_df.dropna(subset=['選手名'])
     title_summary = titles_df_clean.groupby(['選手名', '年度']).size().reset_index(name='タイトル数')
-        
+    
     stats_2023_copy = _stats_2023.copy()
     stats_2024_copy = _stats_2024.copy()
     stats_2025_copy = _stats_2025.copy()
@@ -302,20 +302,18 @@ def prepare_data(_salary_df, _stats_2023, _stats_2024, _stats_2025, _titles_df, 
     stats_2025_copy['年度'] = 2025
     
     stats_all = pd.concat([stats_2023_copy, stats_2024_copy, stats_2025_copy], ignore_index=True)
-
-    # ✅ 列名の空白を除去（重要！）
-    stats_all.columns = stats_all.columns.str.strip()
-
-    # ✅ 年齢データをマージ
+    
+    # 年齢データをマージ
     if _ages_df is not None:
         stats_all = pd.merge(stats_all, _ages_df, on='選手名', how='left')
+        # 年齢データがない選手は平均年齢（28歳）で補完
         if '年齢' in stats_all.columns:
             stats_all['年齢'] = stats_all['年齢'].fillna(28)
         else:
             stats_all['年齢'] = 28
     else:
-        stats_all['年齢'] = 28
-        
+        stats_all['年齢'] = 28  # 年齢データがない場合は全員28歳
+    
     df_2023 = _salary_df[['選手名_2023', '年俸_円_2023']].copy()
     df_2023['年度'] = 2023
     df_2023.rename(columns={'選手名_2023': '選手名', '年俸_円_2023': '年俸_円'}, inplace=True)
@@ -334,11 +332,7 @@ def prepare_data(_salary_df, _stats_2023, _stats_2024, _stats_2025, _titles_df, 
     salary_long = salary_long.sort_values('年俸_円', ascending=False)
     salary_long = salary_long.drop_duplicates(subset=['選手名', '年度'], keep='first')
     
-    # ✅ 「年度」列があるかチェック
-    if '年度' not in stats_all.columns:
-        st.error("'年度' 列が見つかりません")
-    else:
-        stats_all['予測年度'] = stats_all['年度'] + 1
+    stats_all['予測年度'] = stats_all['年度'] + 1
     merged_df = pd.merge(stats_all, title_summary, on=['選手名', '年度'], how='left')
     merged_df['タイトル数'] = merged_df['タイトル数'].fillna(0)
     merged_df = pd.merge(
@@ -1485,10 +1479,3 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム - Powered by Streamlit*")
-
-
-
-
-
-
-
