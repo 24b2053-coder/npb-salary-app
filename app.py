@@ -401,15 +401,10 @@ def train_models(_merged_df):
                    '塁打', '打点', '盗塁', '盗塁刺', '四球', '死球', '三振', '併殺打', 
                    '打率', '出塁率', '長打率', '犠打', '犠飛', 'タイトル数', '年齢']
     
-    # 年齢列が存在する場合は特徴量に追加
-    if '年齢' in _merged_df.columns:
-        feature_cols.append('年齢')
-        ml_df = _merged_df[feature_cols + ['年俸_円', '選手名', '成績年度']].copy()
-    else:
-        # 年齢データがない場合は平均年齢（28歳）で補完
-        ml_df = _merged_df[feature_cols + ['年俸_円', '選手名', '成績年度']].copy()
-        ml_df['年齢'] = 28  # デフォルト年齢
-        feature_cols.append('年齢')
+    # 年齢データがない場合は28歳で補完
+    ml_df = _merged_df[feature_cols + ['年俸_円', '選手名', '成績年度']].copy()
+    if '年齢' not in _merged_df.columns:
+        ml_df['年齢'] = 28
     
     ml_df = ml_df.dropna()
     
@@ -1546,6 +1541,7 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powered by Streamlit*")
+
 
 
 
