@@ -238,7 +238,10 @@ def load_data():
         stats_2024 = pd.read_csv('data/stats_2024.csv')
         stats_2025 = pd.read_csv('data/stats_2025.csv')
         titles_df = pd.read_csv('data/titles_2023&2024&2025.csv')
-        ages_df = pd.read_csv('data/player_ages.csv')
+        try:
+            ages_df = pd.read_csv('data/player_ages.csv')
+        except FileNotFoundError:
+            ages_df = None
         return salary_df, stats_2023, stats_2024, stats_2025, titles_df, ages_df, True
     except FileNotFoundError:
         return None, None, None, None, None, None, False
@@ -247,21 +250,21 @@ salary_df, stats_2023, stats_2024, stats_2025, titles_df, ages_df, data_loaded =
 
 # ファイルアップロード処理
 if not data_loaded:
-    st.sidebar.markdown("**6つのCSVファイルを一度に選択してアップロード：**")
+    st.sidebar.markdown("**CSVファイルを一度に選択してアップロード：**")
     uploaded_files = st.sidebar.file_uploader(
-        "CSVファイルを選択（6つ全て選択してください）",
+        "CSVファイルを選択（5つまたは6つ選択してください）",
         type=['csv'],
         accept_multiple_files=True
     )
     
-    if uploaded_files and len(uploaded_files) == 6:
+    if uploaded_files and len(uploaded_files) >= 5:
         file_dict = {}
         for file in uploaded_files:
             if 'salary' in file.name or '年俸' in file.name:
                 file_dict['salary'] = file
             elif 'titles' in file.name or 'タイトル' in file.name:
                 file_dict['titles'] = file
-            elif 'age' in file.name or '年齢' in file.name:
+            elif 'ages' in file.name or '年齢' in file.name:
                 file_dict['ages'] = file
             elif '2023' in file.name:
                 file_dict['stats_2023'] = file
@@ -270,18 +273,18 @@ if not data_loaded:
             elif '2025' in file.name:
                 file_dict['stats_2025'] = file
         
-        if len(file_dict) == 6:
+        if len(file_dict) >= 5:
             salary_df = pd.read_csv(file_dict['salary'])
             stats_2023 = pd.read_csv(file_dict['stats_2023'])
             stats_2024 = pd.read_csv(file_dict['stats_2024'])
             stats_2025 = pd.read_csv(file_dict['stats_2025'])
             titles_df = pd.read_csv(file_dict['titles'])
-            ages_df = pd.read_csv(file_dict['ages'])
+            ages_df = pd.read_csv(file_dict['ages']) if 'ages' in file_dict else None
             data_loaded = True
         else:
             st.sidebar.error("❌ ファイル名が正しくありません")
     elif uploaded_files:
-        st.sidebar.warning(f"⚠️ {len(uploaded_files)}個のファイルが選択されています。6つ必要です。")
+        st.sidebar.warning(f"⚠️ {len(uploaded_files)}個のファイルが選択されています。5つ以上必要です。")
 
 # データ前処理関数
 @st.cache_data
@@ -300,6 +303,17 @@ def prepare_data(_salary_df, _stats_2023, _stats_2024, _stats_2025, _titles_df, 
     
     stats_all = pd.concat([stats_2023_copy, stats_2024_copy, stats_2025_copy], ignore_index=True)
     
+    # 年齢データをマージ
+    if _ages_df is not None:
+        stats_all = pd.merge(stats_all, _ages_df, on='選手名', how='left')
+        # 年齢データがない選手は平均年齢（28歳）で補完
+        if '年齢' in stats_all.columns:
+            stats_all['年齢'] = stats_all['年齢'].fillna(28)
+        else:
+            stats_all['年齢'] = 28
+    else:
+        stats_all['年齢'] = 28  # 年齢データがない場合は全員28歳
+    
     df_2023 = _salary_df[['選手名_2023', '年俸_円_2023']].copy()
     df_2023['年度'] = 2023
     df_2023.rename(columns={'選手名_2023': '選手名', '年俸_円_2023': '年俸_円'}, inplace=True)
@@ -311,10 +325,6 @@ def prepare_data(_salary_df, _stats_2023, _stats_2024, _stats_2025, _titles_df, 
     df_2025 = _salary_df[['選手名_2024_2025', '年俸_円_2025']].copy()
     df_2025['年度'] = 2025
     df_2025.rename(columns={'選手名_2024_2025': '選手名', '年俸_円_2025': '年俸_円'}, inplace=True)
-
-    stats_all = pd.concat([stats_2023_copy, stats_2024_copy, stats_2025_copy], ignore_index=True)
-    # 年齢データをマージ
-    stats_all = pd.merge(stats_all, _ages_df, on=['選手名', '年度'], how='left')
     
     salary_long = pd.concat([df_2023, df_2024, df_2025], ignore_index=True)
     salary_long = salary_long.dropna(subset=['年俸_円'])
@@ -340,15 +350,24 @@ def prepare_data(_salary_df, _stats_2023, _stats_2024, _stats_2025, _titles_df, 
     
     return merged_df, stats_all_with_titles, salary_long
 
-# モデル訓練関数（対数変換版）
+# モデル訓練関数（対数変換版・年齢追加）
 @st.cache_resource
 def train_models(_merged_df):
-    """モデルを訓練する（対数変換適用）"""
+    """モデルを訓練する（対数変換適用・年齢を特徴量に追加）"""
     feature_cols = ['試合', '打席', '打数', '得点', '安打', '二塁打', '三塁打', '本塁打', 
                    '塁打', '打点', '盗塁', '盗塁刺', '四球', '死球', '三振', '併殺打', 
-                   '打率', '出塁率', '長打率', '犠打', '犠飛', 'タイトル数', '年齢']
+                   '打率', '出塁率', '長打率', '犠打', '犠飛', 'タイトル数']
     
-    ml_df = _merged_df[feature_cols + ['年俸_円', '選手名', '成績年度']].copy()
+    # 年齢列が存在する場合は特徴量に追加
+    if '年齢' in _merged_df.columns:
+        feature_cols.append('年齢')
+        ml_df = _merged_df[feature_cols + ['年俸_円', '選手名', '成績年度']].copy()
+    else:
+        # 年齢データがない場合は平均年齢（28歳）で補完
+        ml_df = _merged_df[feature_cols + ['年俸_円', '選手名', '成績年度']].copy()
+        ml_df['年齢'] = 28  # デフォルト年齢
+        feature_cols.append('年齢')
+    
     ml_df = ml_df.dropna()
     
     X = ml_df[feature_cols]
@@ -503,7 +522,19 @@ if data_loaded:
                     st.error(f"❌ {selected_player}の{stats_year}年のデータが見つかりません")
                 else:
                     player_stats = player_stats.iloc[0]
-                    features = player_stats[st.session_state.feature_cols].values.reshape(1, -1)
+                    
+                    # 年齢データを取得（データになければ28歳）
+                    if '年齢' in player_stats.index and pd.notna(player_stats['年齢']):
+                        player_age = player_stats['年齢']
+                    else:
+                        player_age = 28
+                    
+                    # 特徴量を作成
+                    if '年齢' in st.session_state.feature_cols:
+                        features = player_stats[st.session_state.feature_cols].values.reshape(1, -1)
+                    else:
+                        # 古いモデル（年齢なし）の場合
+                        features = player_stats[st.session_state.feature_cols].values.reshape(1, -1)
                     
                     # 予測（対数変換版）
                     if st.session_state.best_model_name == '線形回帰':
@@ -581,7 +612,9 @@ if data_loaded:
                         st.metric("長打率", f"{player_stats['長打率']:.3f}")
                     with col4:
                         st.metric("打点", int(player_stats['打点']))
-                        st.metric("年齢", int(player_stats['年齢']) if pd.notna(player_stats['年齢']) else 'N/A')
+                        st.metric("タイトル数", int(player_stats['タイトル数']))
+                        if '年齢' in player_stats.index and pd.notna(player_stats['年齢']):
+                            st.metric("年齢", f"{int(player_stats['年齢'])}歳")
                     
                     st.markdown("---")
                     col1, col2 = st.columns(2)
@@ -670,7 +703,12 @@ if data_loaded:
                     
                     if not player_stats.empty:
                         player_stats = player_stats.iloc[0]
-                        features = player_stats[st.session_state.feature_cols].values.reshape(1, -1)
+                        
+                        # 特徴量を作成
+                        if '年齢' in st.session_state.feature_cols:
+                            features = player_stats[st.session_state.feature_cols].values.reshape(1, -1)
+                        else:
+                            features = player_stats[st.session_state.feature_cols].values.reshape(1, -1)
                         
                         # 予測（対数変換版）
                         if st.session_state.best_model_name == '線形回帰':
@@ -705,7 +743,7 @@ if data_loaded:
                             '打率': player_stats['打率'],
                             '本塁打': int(player_stats['本塁打']),
                             '打点': int(player_stats['打点']),
-                            '年齢': int(player_stats['年齢']) if pd.notna(player_stats['年齢']) else None
+                            'タイトル数': int(player_stats['タイトル数'])
                         })
                 
                 if results_list:
@@ -817,7 +855,12 @@ if data_loaded:
                     st.error(f"❌ {selected_player}の{stats_year}年のデータが見つかりません")
                 else:
                     player_stats = player_stats.iloc[0]
-                    features = player_stats[st.session_state.feature_cols].values.reshape(1, -1)
+                    
+                    # 特徴量を作成
+                    if '年齢' in st.session_state.feature_cols:
+                        features = player_stats[st.session_state.feature_cols].values.reshape(1, -1)
+                    else:
+                        features = player_stats[st.session_state.feature_cols].values.reshape(1, -1)
                     
                     # 前年の年俸と実際の年俸を取得
                     previous_salary_data = st.session_state.salary_long[
@@ -1076,10 +1119,12 @@ if data_loaded:
             st.metric("長打率", f"{slg:.3f}")
         
         with col3:
-            st.markdown("**タイトル・前年年俸**")
+            st.markdown("**タイトル・前年年俸・年齢**")
             titles = st.number_input("タイトル数", min_value=0, max_value=10, value=0, key="custom_titles")
             previous_salary = st.number_input("前年年俸（百万円）", min_value=0, max_value=10000, value=0, 
                                             help="減額制限チェック用。0の場合はチェックなし", key="custom_prev_salary")
+            age = st.number_input("年齢", min_value=18, max_value=50, value=28, 
+                                help="選手の年齢を入力してください", key="custom_age")
         
         st.markdown("---")
         
@@ -1090,12 +1135,12 @@ if data_loaded:
             elif hits > at_bats:
                 st.error("❌ 安打は打数以下にしてください")
             else:
-                # 特徴量を作成
+                # 特徴量を作成（年齢を含む23項目）
                 custom_features = np.array([[
                     games, plate_appearances, at_bats, runs, hits, 
                     doubles, triples, home_runs, total_bases, rbis, 
                     stolen_bases, caught_stealing, walks, hit_by_pitch, strikeouts,
-                    double_plays, avg, obp, slg, sac_hits, sac_flies, titles
+                    double_plays, avg, obp, slg, sac_hits, sac_flies, titles, age
                 ]])
                 
                 # 全モデルで予測
@@ -1228,19 +1273,28 @@ if data_loaded:
                 st.markdown("---")
                 st.subheader("📈 入力成績サマリー")
                 
-                col1, col2, col3, col4 = st.columns(4)
+                col1, col2, col3, col4, col5 = st.columns(5)
                 with col1:
                     st.metric("試合", games)
-                    st.metric("打率", f"{avg:.3f}")
                 with col2:
                     st.metric("安打", hits)
-                    st.metric("出塁率", f"{obp:.3f}")
                 with col3:
                     st.metric("本塁打", home_runs)
-                    st.metric("長打率", f"{slg:.3f}")
                 with col4:
                     st.metric("打点", rbis)
+                with col5:
+                    st.metric("年齢", f"{age}歳")
+                
+                col1, col2, col3, col4 = st.columns(4)
+                with col1:
+                    st.metric("打率", f"{avg:.3f}")
+                with col2:
+                    st.metric("出塁率", f"{obp:.3f}")
+                with col3:
+                    st.metric("長打率", f"{slg:.3f}")
+                with col4:
                     st.metric("タイトル数", titles)
+                    st.metric("年齢", f"{age}歳")
                 
                 # データセットとの比較
                 st.markdown("---")
@@ -1273,6 +1327,20 @@ if data_loaded:
                     ax4.grid(alpha=0.3)
                     st.pyplot(fig4)
                     plt.close(fig4)
+                
+                # 年齢の分布
+                if '年齢' in st.session_state.ml_df.columns:
+                    st.markdown("---")
+                    fig5, ax5 = plt.subplots(figsize=(10, 5))
+                    ax5.hist(st.session_state.ml_df['年齢'], bins=20, alpha=0.7, color='lightgreen', edgecolor='black')
+                    ax5.axvline(age, color='red', linestyle='--', linewidth=2, label=f'入力値: {age}歳')
+                    ax5.set_xlabel('年齢', fontweight='bold')
+                    ax5.set_ylabel('選手数', fontweight='bold')
+                    ax5.set_title('年齢の分布', fontweight='bold')
+                    ax5.legend()
+                    ax5.grid(alpha=0.3)
+                    st.pyplot(fig5)
+                    plt.close(fig5)
     
     # モデル性能
     elif menu == "📈 モデル性能":
@@ -1341,7 +1409,7 @@ if data_loaded:
         st.subheader("主要指標との相関")
         
         correlations = st.session_state.ml_df[
-            ['打率', '本塁打', '打点', '出塁率', '長打率', '年齢', 'タイトル数', '年俸_円']
+            ['打率', '本塁打', '打点', '出塁率', '長打率', 'タイトル数', '年俸_円']
         ].corr()['年俸_円'].sort_values(ascending=False)
         
         corr_data = []
@@ -1393,7 +1461,7 @@ else:
     ├── stats_2024.csv
     ├── stats_2025.csv
     ├── titles_2023&2024&2025.csv
-    └── player_ages.csv
+    └── player_ages.csv (オプション)
     ```
     
     **方法2: 左サイドバーから手動アップロード**
@@ -1402,6 +1470,7 @@ else:
     - ⚾ 選手個別の年俸予測（対数変換による精度向上）
     - 📊 複数選手の比較分析
     - 🔬 複数モデルでの同時予測と比較
+    - ✏️ オリジナル選手データでの予測
     - 📈 予測モデルの性能評価
     - 📉 年俸影響要因の分析
     - ⚖️ NPB減額制限ルールの適用
@@ -1409,5 +1478,4 @@ else:
 
 # フッター
 st.markdown("---")
-st.markdown("*NPB選手年俸予測システム（対数変換版 + 減額制限対応 + 年齢考慮） - Powered by Streamlit*")
-
+st.markdown("*NPB選手年俸予測システム - Powered by Streamlit*")
