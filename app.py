@@ -399,7 +399,7 @@ def train_models(_merged_df):
     """モデルを訓練する（対数変換適用・年齢を特徴量に追加）"""
     feature_cols = ['試合', '打席', '打数', '得点', '安打', '二塁打', '三塁打', '本塁打', 
                    '塁打', '打点', '盗塁', '盗塁刺', '四球', '死球', '三振', '併殺打', 
-                   '打率', '出塁率', '長打率', '犠打', '犠飛', 'タイトル数']
+                   '打率', '出塁率', '長打率', '犠打', '犠飛', 'タイトル数', '年齢']
     
     # 年齢列が存在する場合は特徴量に追加
     if '年齢' in _merged_df.columns:
@@ -1204,11 +1204,11 @@ if data_loaded:
                 st.error("❌ 安打は打数以下にしてください")
             else:
                 # 特徴量を作成（年齢を含む23項目）
-                custom_features = np.array([[
+                    custom_features = np.array([[
                     games, plate_appearances, at_bats, runs, hits, 
-                    doubles, triples, home_runs, total_bases, rbis, 
+                    doubles, triples, home_runs, total_bases, rbis,  # ← total_basesを追加
                     stolen_bases, caught_stealing, walks, hit_by_pitch, strikeouts,
-                    double_plays, avg, obp, slg, sac_hits, sac_flies, titles, age
+                    double_plays, avg, obp, slg, sac_hits, sac_flies, titles, age  # ← 最後にageを追加
                 ]])
                 
                 # 全モデルで予測
@@ -1546,6 +1546,7 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powered by Streamlit*")
+
 
 
 
