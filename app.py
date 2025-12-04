@@ -606,28 +606,40 @@ if data_loaded:
                         ].sort_values('年度')
                         
                         if not player_salary_history.empty:
-                            years = player_salary_history['年度'].values
+                            # 年度でソート
+                            player_salary_history = player_salary_history.sort_values('年度')
+
+                            # 年度を整数化
+                             years = player_salary_history['年度'].astype(int).values
                             salaries = player_salary_history['年俸_円'].values / 1e6
+
+                            # 実際の年俸
                             ax1.plot(years, salaries, 'o-', linewidth=2, markersize=8, label='実際の年俸')
-                            ax1.plot(predict_year, predicted_salary/1e6, 'r*', markersize=20, label='予測年俸（制限前）')
-                            
+
+                            # 予測年
+                            ax1.plot(int(predict_year), predicted_salary/1e6, 'r*', markersize=20, label='予測年俸（制限前）')
+
+                            # 制限後
                             if previous_salary is not None and is_limited:
-                                ax1.plot(predict_year, display_salary/1e6, 'orange', marker='D', markersize=12, label='制限後年俸')
-                            
+                                ax1.plot(int(predict_year), display_salary/1e6, 'orange', marker='D', markersize=12, label='制限後年俸')
+
+                            # 実際の年俸（当年）
                             if actual_salary:
-                                ax1.plot(predict_year, actual_salary/1e6, 'go', markersize=12, label=f'実際の年俸({predict_year})')
-                            
-                            min_year = years.min()
-                            max_year = max(max(years), int(predict_year))
-                            xticks = np.linspace(min_year, max_year, 3, dtype=int)
-                            ax1.set_xticks(xticks)   
+                                ax1.plot(int(predict_year), actual_salary/1e6, 'go', markersize=12, 
+                                    label=f'実際の年俸({int(predict_year)})')
+
+                            # ★ X軸を固定で「2023〜2026」の4つにする ★
+                            ax1.set_xticks([2023, 2024, 2025, 2026])
+
+                            # 表示を整数に
                             ax1.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: int(x)))
+
                             ax1.set_xlabel('年度', fontweight='bold')
                             ax1.set_ylabel('年俸（百万円）', fontweight='bold')
                             ax1.set_title(f'{selected_player} - 年俸推移', fontweight='bold')
                             ax1.grid(alpha=0.3)
                             ax1.legend()
-                        
+
                         st.pyplot(fig1)
                         plt.close(fig1)
                     
@@ -1477,3 +1489,4 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powered by Streamlit*")
+
