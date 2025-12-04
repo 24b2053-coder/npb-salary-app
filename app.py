@@ -414,7 +414,7 @@ if data_loaded:
     st.sidebar.markdown("### 🎯 機能選択")
     menu = st.sidebar.radio(
         "メニュー",
-        ["🏠 ホーム", "🔍 選手検索・予測", "📊 複数選手比較", "🔬 複数モデル比較", "📈 モデル性能", "📉 要因分析"],
+        ["🏠 ホーム", "🔍 選手検索・予測", "📊 複数選手比較", "🔬 複数モデル比較", "✏️ カスタム入力予測", "📈 モデル性能", "📉 要因分析"],
         key="main_menu",
         label_visibility="collapsed"
     )
@@ -437,6 +437,7 @@ if data_loaded:
         - 🔍 **選手検索・予測**: 個別選手の年俸予測とレーダーチャート
         - 📊 **複数選手比較**: 最大5人の選手を比較
         - 🔬 **複数モデル比較**: 全モデルで同時予測して比較
+        - ✏️ **カスタム入力予測**: オリジナル選手データで予測
         - 📈 **モデル性能**: 予測モデルの詳細情報
         - 📉 **要因分析**: 年俸に影響を与える要因の分析
         
@@ -1008,6 +1009,262 @@ if data_loaded:
                     with col4:
                         range_pred = max_pred - min_pred
                         st.metric("予測幅", f"{range_pred:.1f}百万円")
+    
+    # カスタム入力予測
+    elif menu == "✏️ カスタム入力予測":
+        st.header("✏️ カスタム入力予測")
+        st.markdown("オリジナルの選手データを入力して年俸を予測します")
+        
+        st.info("💡 すべての項目を入力してください。わからない項目は平均的な値を入力してください。")
+        
+        # 入力フォーム
+        st.subheader("📝 選手情報入力")
+        
+        player_name = st.text_input("選手名（任意）", placeholder="例: 山田太郎", key="custom_player_name")
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.markdown("**基本成績**")
+            games = st.number_input("試合数", min_value=0, max_value=200, value=143, key="custom_games")
+            plate_appearances = st.number_input("打席", min_value=0, max_value=800, value=600, key="custom_pa")
+            at_bats = st.number_input("打数", min_value=0, max_value=700, value=520, key="custom_ab")
+            runs = st.number_input("得点", min_value=0, max_value=200, value=80, key="custom_runs")
+            hits = st.number_input("安打", min_value=0, max_value=300, value=150, key="custom_hits")
+            
+        with col2:
+            st.markdown("**長打成績**")
+            doubles = st.number_input("二塁打", min_value=0, max_value=100, value=30, key="custom_2b")
+            triples = st.number_input("三塁打", min_value=0, max_value=30, value=3, key="custom_3b")
+            home_runs = st.number_input("本塁打", min_value=0, max_value=70, value=25, key="custom_hr")
+            total_bases = st.number_input("塁打", min_value=0, max_value=500, value=250, key="custom_tb")
+            rbis = st.number_input("打点", min_value=0, max_value=200, value=90, key="custom_rbi")
+            
+        with col3:
+            st.markdown("**走塁・選球眼**")
+            stolen_bases = st.number_input("盗塁", min_value=0, max_value=100, value=10, key="custom_sb")
+            caught_stealing = st.number_input("盗塁刺", min_value=0, max_value=50, value=3, key="custom_cs")
+            walks = st.number_input("四球", min_value=0, max_value=200, value=60, key="custom_bb")
+            hit_by_pitch = st.number_input("死球", min_value=0, max_value=50, value=5, key="custom_hbp")
+            strikeouts = st.number_input("三振", min_value=0, max_value=300, value=120, key="custom_so")
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.markdown("**その他**")
+            double_plays = st.number_input("併殺打", min_value=0, max_value=50, value=10, key="custom_gdp")
+            sac_hits = st.number_input("犠打", min_value=0, max_value=50, value=2, key="custom_sh")
+            sac_flies = st.number_input("犠飛", min_value=0, max_value=30, value=5, key="custom_sf")
+            
+        with col2:
+            st.markdown("**指標（自動計算）**")
+            # 打率・出塁率・長打率は自動計算
+            avg = hits / at_bats if at_bats > 0 else 0.0
+            obp = (hits + walks + hit_by_pitch) / (at_bats + walks + hit_by_pitch + sac_flies) if (at_bats + walks + hit_by_pitch + sac_flies) > 0 else 0.0
+            slg = total_bases / at_bats if at_bats > 0 else 0.0
+            
+            st.metric("打率", f"{avg:.3f}")
+            st.metric("出塁率", f"{obp:.3f}")
+            st.metric("長打率", f"{slg:.3f}")
+        
+        with col3:
+            st.markdown("**タイトル・前年年俸**")
+            titles = st.number_input("タイトル数", min_value=0, max_value=10, value=0, key="custom_titles")
+            previous_salary = st.number_input("前年年俸（百万円）", min_value=0, max_value=10000, value=0, 
+                                            help="減額制限チェック用。0の場合はチェックなし", key="custom_prev_salary")
+        
+        st.markdown("---")
+        
+        if st.button("🎯 年俸予測実行", type="primary", key="custom_predict_button"):
+            # 入力データの検証
+            if at_bats == 0:
+                st.error("❌ 打数は0より大きい値を入力してください")
+            elif hits > at_bats:
+                st.error("❌ 安打は打数以下にしてください")
+            else:
+                # 特徴量を作成
+                custom_features = np.array([[
+                    games, plate_appearances, at_bats, runs, hits, 
+                    doubles, triples, home_runs, total_bases, rbis, 
+                    stolen_bases, caught_stealing, walks, hit_by_pitch, strikeouts,
+                    double_plays, avg, obp, slg, sac_hits, sac_flies, titles
+                ]])
+                
+                # 全モデルで予測
+                st.success("✅ 予測完了！")
+                
+                st.subheader("📊 予測結果")
+                
+                predictions = []
+                for model_name, model_info in st.session_state.results.items():
+                    model = model_info['model']
+                    
+                    if model_name == '線形回帰':
+                        features_scaled = st.session_state.scaler.transform(custom_features)
+                        pred_log = model.predict(features_scaled)[0]
+                    else:
+                        pred_log = model.predict(custom_features)[0]
+                    
+                    pred_salary = np.expm1(pred_log)
+                    
+                    # 減額制限チェック
+                    is_limited = False
+                    display_salary = pred_salary
+                    if previous_salary > 0:
+                        prev_salary_yen = previous_salary * 1e6
+                        is_limited, min_salary, reduction_rate = check_salary_reduction_limit(pred_salary, prev_salary_yen)
+                        if is_limited:
+                            display_salary = min_salary
+                    
+                    predictions.append({
+                        'モデル': model_name,
+                        '予測年俸': pred_salary / 1e6,
+                        '制限後年俸': display_salary / 1e6,
+                        '減額制限': 'あり' if is_limited else 'なし'
+                    })
+                
+                df_pred = pd.DataFrame(predictions)
+                
+                # メトリクス表示
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    avg_pred = df_pred['制限後年俸'].mean()
+                    st.metric("平均予測年俸", f"{avg_pred:.1f}百万円")
+                with col2:
+                    max_pred = df_pred['制限後年俸'].max()
+                    st.metric("最大予測", f"{max_pred:.1f}百万円")
+                with col3:
+                    min_pred = df_pred['制限後年俸'].min()
+                    st.metric("最小予測", f"{min_pred:.1f}百万円")
+                
+                # 減額制限の警告
+                if any(df_pred['減額制限'] == 'あり'):
+                    st.warning(f"""
+                    ⚖️ **減額制限が適用されました**
+                    - 前年年俸: {previous_salary:.1f}百万円
+                    - 一部のモデルで減額制限に該当しています
+                    """)
+                
+                st.markdown("---")
+                
+                # 予測結果テーブル
+                df_display = df_pred.copy()
+                df_display['予測年俸'] = df_display['予測年俸'].apply(lambda x: f"{x:.1f}")
+                df_display['制限後年俸'] = df_display['制限後年俸'].apply(lambda x: f"{x:.1f}")
+                
+                st.dataframe(
+                    df_display,
+                    use_container_width=True,
+                    hide_index=True
+                )
+                
+                st.markdown("---")
+                
+                # グラフ表示
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    fig1, ax1 = plt.subplots(figsize=(10, 6))
+                    
+                    x = np.arange(len(df_pred))
+                    width = 0.35
+                    
+                    ax1.barh(x - width/2, df_pred['予測年俸'], width, 
+                            label='予測年俸（制限前）', alpha=0.7, color='steelblue')
+                    ax1.barh(x + width/2, df_pred['制限後年俸'], width, 
+                            label='予測年俸（制限後）', alpha=0.7, color='orange')
+                    
+                    ax1.set_yticks(x)
+                    ax1.set_yticklabels(df_pred['モデル'])
+                    ax1.set_xlabel('予測年俸（百万円）', fontweight='bold')
+                    player_title = player_name if player_name else "カスタム選手"
+                    ax1.set_title(f'{player_title} - モデル別予測年俸', fontweight='bold')
+                    ax1.legend()
+                    ax1.grid(axis='x', alpha=0.3)
+                    
+                    st.pyplot(fig1)
+                    plt.close(fig1)
+                
+                with col2:
+                    fig2, ax2 = plt.subplots(figsize=(10, 6), subplot_kw=dict(projection='polar'))
+                    
+                    radar_stats = {
+                        '打率': avg / 0.4,
+                        '出塁率': obp / 0.5,
+                        '長打率': slg / 0.7,
+                        '本塁打': min(home_runs / 40, 1.0),
+                        '打点': min(rbis / 100, 1.0),
+                        '盗塁': min(stolen_bases / 40, 1.0),
+                    }
+                    
+                    categories = list(radar_stats.keys())
+                    values = list(radar_stats.values())
+                    values += values[:1]
+                    
+                    angles = np.linspace(0, 2 * np.pi, len(categories), endpoint=False).tolist()
+                    angles += angles[:1]
+                    
+                    ax2.plot(angles, values, 'o-', linewidth=2, color='#2E86AB')
+                    ax2.fill(angles, values, alpha=0.25, color='#2E86AB')
+                    ax2.set_xticks(angles[:-1])
+                    ax2.set_xticklabels(categories)
+                    ax2.set_ylim(0, 1)
+                    player_title = player_name if player_name else "カスタム選手"
+                    ax2.set_title(f'{player_title} - 成績レーダー', fontweight='bold', pad=20)
+                    ax2.grid(True)
+                    
+                    st.pyplot(fig2)
+                    plt.close(fig2)
+                
+                # 成績サマリー
+                st.markdown("---")
+                st.subheader("📈 入力成績サマリー")
+                
+                col1, col2, col3, col4 = st.columns(4)
+                with col1:
+                    st.metric("試合", games)
+                    st.metric("打率", f"{avg:.3f}")
+                with col2:
+                    st.metric("安打", hits)
+                    st.metric("出塁率", f"{obp:.3f}")
+                with col3:
+                    st.metric("本塁打", home_runs)
+                    st.metric("長打率", f"{slg:.3f}")
+                with col4:
+                    st.metric("打点", rbis)
+                    st.metric("タイトル数", titles)
+                
+                # データセットとの比較
+                st.markdown("---")
+                st.subheader("📊 データセットとの比較")
+                
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    # 打率の分布と入力値の位置
+                    fig3, ax3 = plt.subplots(figsize=(8, 5))
+                    ax3.hist(st.session_state.ml_df['打率'], bins=30, alpha=0.7, color='skyblue', edgecolor='black')
+                    ax3.axvline(avg, color='red', linestyle='--', linewidth=2, label=f'入力値: {avg:.3f}')
+                    ax3.set_xlabel('打率', fontweight='bold')
+                    ax3.set_ylabel('選手数', fontweight='bold')
+                    ax3.set_title('打率の分布', fontweight='bold')
+                    ax3.legend()
+                    ax3.grid(alpha=0.3)
+                    st.pyplot(fig3)
+                    plt.close(fig3)
+                
+                with col2:
+                    # 本塁打の分布と入力値の位置
+                    fig4, ax4 = plt.subplots(figsize=(8, 5))
+                    ax4.hist(st.session_state.ml_df['本塁打'], bins=30, alpha=0.7, color='lightcoral', edgecolor='black')
+                    ax4.axvline(home_runs, color='red', linestyle='--', linewidth=2, label=f'入力値: {home_runs}')
+                    ax4.set_xlabel('本塁打', fontweight='bold')
+                    ax4.set_ylabel('選手数', fontweight='bold')
+                    ax4.set_title('本塁打の分布', fontweight='bold')
+                    ax4.legend()
+                    ax4.grid(alpha=0.3)
+                    st.pyplot(fig4)
+                    plt.close(fig4)
     
     # モデル性能
     elif menu == "📈 モデル性能":
