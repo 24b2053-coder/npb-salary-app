@@ -610,7 +610,7 @@ if data_loaded:
                             player_salary_history = player_salary_history.sort_values('年度')
 
                             # 年度を整数化
-                             years = player_salary_history['年度'].astype(int).values
+                            years = player_salary_history['年度'].astype(int).values
                             salaries = player_salary_history['年俸_円'].values / 1e6
 
                             # 実際の年俸
@@ -1489,4 +1489,5 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powered by Streamlit*")
+
 
