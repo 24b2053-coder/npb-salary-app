@@ -185,6 +185,67 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
+st.markdown("""
+<style>
+
+/* ====== ダークモード全体 ====== */
+@media (prefers-color-scheme: dark) {
+
+    /* メイン背景 */
+    .main, .block-container {
+        background-color: #1e1e1e !important;
+        color: #f2f2f2 !important;
+    }
+
+    /* サイドバー */
+    [data-testid="stSidebar"] {
+        background-color: #2a2a2a !important;
+        border-right: 1px solid #444 !important;
+    }
+
+    /* テキスト色 */
+    [data-testid="stSidebar"] *, .main * {
+        color: #f2f2f2 !important;
+    }
+
+    /* テーブルヘッダー */
+    thead tr th {
+        background-color: #333 !important;
+        color: #fff !important;
+    }
+
+    /* テーブル本体 */
+    tbody tr {
+        background-color: #2b2b2b !important;
+        color: #fff !important;
+    }
+
+    /* ボタン */
+    button[kind="primary"], .stButton button {
+        background-color: #444 !important;
+        color: #fff !important;
+        border-radius: 8px;
+        border: 1px solid #666 !important;
+    }
+    button[kind="primary"]:hover, .stButton button:hover {
+        background-color: #555 !important;
+    }
+
+    /* 入力フォーム */
+    input, textarea, select, .stTextInput input {
+        background-color: #2b2b2b !important;
+        color: #fff !important;
+        border: 1px solid #666 !important;
+    }
+
+    /* プロット周り（Matplotlib） */
+    .stPlotlyChart, .stPyplot {
+        background-color: #1e1e1e !important;
+    }
+}
+
+</style>
+""", unsafe_allow_html=True)
 
 # 日本語フォント設定
 try:
@@ -1489,5 +1550,6 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powered by Streamlit*")
+
 
 
