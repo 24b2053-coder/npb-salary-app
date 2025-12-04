@@ -1157,7 +1157,6 @@ if data_loaded:
             doubles = st.number_input("二塁打", min_value=0, max_value=100, value=30, key="custom_2b")
             triples = st.number_input("三塁打", min_value=0, max_value=30, value=3, key="custom_3b")
             home_runs = st.number_input("本塁打", min_value=0, max_value=70, value=25, key="custom_hr")
-            total_bases = st.number_input("塁打", min_value=0, max_value=500, value=250, key="custom_tb")
             rbis = st.number_input("打点", min_value=0, max_value=200, value=90, key="custom_rbi")
             
         with col3:
@@ -1181,7 +1180,7 @@ if data_loaded:
             # 打率・出塁率・長打率は自動計算
             avg = hits / at_bats if at_bats > 0 else 0.0
             obp = (hits + walks + hit_by_pitch) / (at_bats + walks + hit_by_pitch + sac_flies) if (at_bats + walks + hit_by_pitch + sac_flies) > 0 else 0.0
-            slg = total_bases / at_bats if at_bats > 0 else 0.0
+            slg = (hits+doubles+triples*2+home_runs*3) / at_bats if at_bats > 0 else 0.0
             
             st.metric("打率", f"{avg:.3f}")
             st.metric("出塁率", f"{obp:.3f}")
@@ -1547,6 +1546,7 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powered by Streamlit*")
+
 
 
 
