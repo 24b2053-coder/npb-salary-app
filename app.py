@@ -608,7 +608,7 @@ if data_loaded:
                         if not player_salary_history.empty:
                             years = player_salary_history['年度'].values
                             salaries = player_salary_history['年俸_円'].values / 1e6
-                            ax1.plot(years, salaries, 'o-', linewidth=2, markersize=3, label='実際の年俸')
+                            ax1.plot(years, salaries, 'o-', linewidth=2, markersize=8, label='実際の年俸')
                             ax1.plot(predict_year, predicted_salary/1e6, 'r*', markersize=20, label='予測年俸（制限前）')
                             
                             if previous_salary is not None and is_limited:
@@ -617,6 +617,7 @@ if data_loaded:
                             if actual_salary:
                                 ax1.plot(predict_year, actual_salary/1e6, 'go', markersize=12, label=f'実際の年俸({predict_year})')
                             
+                            ax1.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: int(x)))
                             ax1.set_xlabel('年度', fontweight='bold')
                             ax1.set_ylabel('年俸（百万円）', fontweight='bold')
                             ax1.set_title(f'{selected_player} - 年俸推移', fontweight='bold')
@@ -1472,4 +1473,5 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム - Powered by Streamlit*")
+
 
