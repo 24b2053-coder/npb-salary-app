@@ -300,14 +300,6 @@ def prepare_data(_salary_df, _stats_2023, _stats_2024, _stats_2025, _titles_df, 
     stats_2023_copy['年度'] = 2023
     stats_2024_copy['年度'] = 2024
     stats_2025_copy['年度'] = 2025
-
-    stats_all.columns = stats_all.columns.str.strip()  # 空白除去
-
-if '年度' not in stats_all.columns:
-    st.error("'年度' 列が見つかりません。前処理を確認してください。")
-else:
-    stats_all['予測年度'] = stats_all['年度'] + 1
-
     
     stats_all = pd.concat([stats_2023_copy, stats_2024_copy, stats_2025_copy], ignore_index=True)
     
@@ -356,7 +348,7 @@ else:
     stats_all_with_titles = pd.merge(stats_all, title_summary, on=['選手名', '年度'], how='left')
     stats_all_with_titles['タイトル数'] = stats_all_with_titles['タイトル数'].fillna(0)
     
-return merged_df, stats_all_with_titles, salary_long
+    return merged_df, stats_all_with_titles, salary_long
 
 # モデル訓練関数（対数変換版・年齢追加）
 @st.cache_resource
@@ -1487,5 +1479,6 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム - Powered by Streamlit*")
+
 
 
