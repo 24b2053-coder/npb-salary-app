@@ -1204,7 +1204,7 @@ if data_loaded:
                 st.error("❌ 安打は打数以下にしてください")
             else:
                 # 特徴量を作成（年齢を含む23項目）
-                    custom_features = np.array([[
+                custom_features = np.array([[
                     games, plate_appearances, at_bats, runs, hits, 
                     doubles, triples, home_runs, total_bases, rbis,  # ← total_basesを追加
                     stolen_bases, caught_stealing, walks, hit_by_pitch, strikeouts,
@@ -1546,6 +1546,7 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powered by Streamlit*")
+
 
 
 
