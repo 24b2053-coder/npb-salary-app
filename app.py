@@ -378,6 +378,11 @@ def prepare_data(_salary_df, _stats_2023, _stats_2024, _stats_2025, _titles_df):
     stats_all['予測年度'] = stats_all['年度'] + 1
     merged_df = pd.merge(stats_all, title_summary, on=['選手名', '年度'], how='left')
     merged_df['タイトル数'] = merged_df['タイトル数'].fillna(0)
+    
+    # ★ 年齢データを保存 ★
+    if '年齢' in merged_df.columns:
+        age_backup = merged_df[['選手名', '年度', '年齢']].copy()
+    
     merged_df = pd.merge(
         merged_df,
         salary_long,
@@ -385,6 +390,22 @@ def prepare_data(_salary_df, _stats_2023, _stats_2024, _stats_2025, _titles_df):
         right_on=['選手名', '年度'],
         suffixes=('_成績', '_年俸')
     )
+    
+    # ★ 年齢列が消えた場合は復元 ★
+    if '年齢' not in merged_df.columns and 'age_backup' in locals():
+        merged_df = pd.merge(
+            merged_df,
+            age_backup,
+            left_on=['選手名', '年度_成績'],
+            right_on=['選手名', '年度'],
+            how='left'
+        )
+        # 重複列を削除
+        if '年度_y' in merged_df.columns:
+            merged_df = merged_df.drop(columns=['年度_y'])
+        if '年度_x' in merged_df.columns:
+            merged_df = merged_df.rename(columns={'年度_x': '年度_成績'})
+    
     merged_df = merged_df.drop(columns=['年度_年俸', '予測年度'])
     merged_df.rename(columns={'年度_成績': '成績年度'}, inplace=True)
     
@@ -1565,6 +1586,7 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powered by Streamlit*")
+
 
 
 
