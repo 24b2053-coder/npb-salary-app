@@ -1517,7 +1517,7 @@ if data_loaded:
         st.subheader("主要指標との相関")
         
         correlations = st.session_state.ml_df[
-            ['打率', '本塁打', '打点', '出塁率', '長打率', 'タイトル数', '年齢', '年俸_円']
+            ['打率', '本塁打', '打点', '出塁率', '長打率', 'タイトル数', '年俸_円']
         ].corr()['年俸_円'].sort_values(ascending=False)
         
         corr_data = []
@@ -1531,7 +1531,7 @@ if data_loaded:
             hide_index=True
         )
         
-        col1, col2 = st.columns(2)
+        col1, col2, col3 = st.columns(3)
         
         with col1:
             fig1, ax1 = plt.subplots(figsize=(8, 5))
@@ -1552,6 +1552,16 @@ if data_loaded:
             ax2.grid(alpha=0.3)
             st.pyplot(fig2)
             plt.close(fig2)
+
+        with col3:
+            fig3, ax3 = plt.subplots(figsize=(8, 5))
+            ax3.scatter(st.session_state.ml_df['年齢'], st.session_state.ml_df['年俸_円']/1e6, alpha=0.5, color='orange')
+            ax3.set_xlabel('年齢', fontweight='bold')
+            ax3.set_ylabel('年俸（百万円）', fontweight='bold')
+            ax3.set_title('年齢と年俸の関係', fontweight='bold')
+            ax3.grid(alpha=0.3)
+            st.pyplot(fig3)
+            plt.close(fig3)
 
 else:
     # ファイル未アップロード時
