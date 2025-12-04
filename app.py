@@ -1137,9 +1137,6 @@ if data_loaded:
     elif menu == "✏️ カスタム入力予測":
         st.header("✏️ カスタム入力予測")
         st.markdown("オリジナルの選手データを入力して年俸を予測します")
-        
-        st.info("💡 すべての項目を入力してください。わからない項目は平均的な値を入力してください。")
-        
         # 入力フォーム
         st.subheader("📝 選手情報入力")
         
@@ -1550,6 +1547,7 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powered by Streamlit*")
+
 
 
 
