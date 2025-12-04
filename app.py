@@ -292,7 +292,18 @@ def prepare_data(_salary_df, _stats_2023, _stats_2024, _stats_2025, _titles_df, 
     """データの前処理を行う"""
     titles_df_clean = _titles_df.dropna(subset=['選手名'])
     title_summary = titles_df_clean.groupby(['選手名', '年度']).size().reset_index(name='タイトル数')
-    
+
+     # 年齢データをマージ
+    if _ages_df is not None:
+        stats_all = pd.merge(stats_all, _ages_df, on='選手名', how='left')
+        # 年齢データがない選手は平均年齢（28歳）で補完
+        if '年齢' in stats_all.columns:
+            stats_all['年齢'] = stats_all['年齢'].fillna(28)
+        else:
+            stats_all['年齢'] = 28
+    else:
+        stats_all['年齢'] = 28  # 年齢データがない場合は全員28歳
+        
     stats_2023_copy = _stats_2023.copy()
     stats_2024_copy = _stats_2024.copy()
     stats_2025_copy = _stats_2025.copy()
@@ -1468,6 +1479,7 @@ else:
 # フッター
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム - Powered by Streamlit*")
+
 
 
 
