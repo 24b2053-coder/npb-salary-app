@@ -1593,7 +1593,7 @@ if data_loaded:
         st.markdown("実際の年俸データがある選手の予測精度を分析し、ランキング表示します")
         
         # 予測年度を選択
-        rank_year = st.selectbox("ランキング対象年度", [2024, 2025], index=1, key="rank_year_select")
+        rank_year = st.selectbox("ランキング対象年度", [2024, 2025, 2026], index=1, key="rank_year_select")
         
         # ランキングのソート基準を選択
         col1, col2 = st.columns([2, 1])
@@ -1959,4 +1959,5 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
+
 
