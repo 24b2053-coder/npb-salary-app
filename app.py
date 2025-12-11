@@ -535,7 +535,7 @@ if data_loaded:
     st.sidebar.markdown("### 🎯 機能選択")
     menu = st.sidebar.radio(
         "メニュー",
-        ["🏠 ホーム", "🔍 選手予測", "📊 選手比較", "🔬 モデル比較", "✏️ カスタム比較", "📈 モデル性能", "📉 要因分析", "🏆 精度ランキング"],
+        ["🏠 ホーム", "🔍 選手予測", "📊 選手比較", "🔬 モデル比較", "✏️ カスタム", "📈 性能", "📉 要因分析", "🏆 精度ランキング"],
         key="main_menu",
         label_visibility="collapsed"
     )
@@ -652,6 +652,9 @@ if data_loaded:
                         predicted_salary_log = st.session_state.best_model.predict(features)[0]
                     
                     predicted_salary = np.expm1(predicted_salary_log)
+                    
+                    # 十万円単位で四捨五入
+                    predicted_salary = round(predicted_salary / 100000) * 100000
                     
                     # 前年の年俸を取得
                     previous_salary_data = st.session_state.salary_long[
@@ -851,6 +854,9 @@ if data_loaded:
                         
                         predicted_salary = np.expm1(predicted_salary_log)
                         
+                        # 十万円単位で四捨五入
+                        predicted_salary = round(predicted_salary / 100000) * 100000
+                        
                         # 前年（2024年）の年俸を取得
                         previous_salary_data = st.session_state.salary_long[
                             (st.session_state.salary_long['選手名'] == player) &
@@ -1027,6 +1033,9 @@ if data_loaded:
                         
                         pred_salary = np.expm1(pred_log)
                         
+                        # 十万円単位で四捨五入
+                        pred_salary = round(pred_salary / 100000) * 100000
+                        
                         # 減額制限チェック
                         is_limited = False
                         display_salary = pred_salary
@@ -1201,7 +1210,7 @@ if data_loaded:
                         st.metric("予測幅", f"{range_pred:.1f}百万円")
     
     # カスタム入力予測
-    elif menu == "✏️ カスタム予測":
+    elif menu == "✏️ カスタム":
         st.header("✏️ カスタム入力予測")
         st.markdown("オリジナルの選手データを入力して年俸を予測します")
         # 入力フォーム
@@ -1297,6 +1306,9 @@ if data_loaded:
                         pred_log = model.predict(custom_features)[0]
                     
                     pred_salary = np.expm1(pred_log)
+                    
+                    # 十万円単位で四捨五入
+                    pred_salary = round(pred_salary / 100000) * 100000
                     
                     # 減額制限チェック
                     is_limited = False
@@ -1480,7 +1492,7 @@ if data_loaded:
                     plt.close(fig5)
     
     # モデル性能
-    elif menu == "📈 モデル性能":
+    elif menu == "📈 性能":
         st.header("📈 モデル性能")
         
         model_data = []
@@ -1671,6 +1683,9 @@ if data_loaded:
                             predicted_salary_log = st.session_state.best_model.predict(features)[0]
                         
                         predicted_salary = np.expm1(predicted_salary_log)
+                        
+                        # 十万円単位で四捨五入
+                        predicted_salary = round(predicted_salary / 100000) * 100000
                         
                         # 前年の年俸を取得
                         previous_salary_data = st.session_state.salary_long[
@@ -1935,6 +1950,18 @@ else:
     ├── stats_2025.csv
     └── titles_2023&2024&2025.csv
     ```
+    
+    **方法2: 左サイドバーから手動アップロード**
+    
+    ### 🚀 機能
+    - ⚾ 選手個別の年俸予測（対数変換による精度向上）
+    - 📊 複数選手の比較分析
+    - 🔬 複数モデルでの同時予測と比較
+    - ✏️ オリジナル選手データでの予測
+    - 📈 予測モデルの性能評価
+    - 📉 年俸影響要因の分析
+    - 🏆 予測精度ランキング（誤差の少ない選手分析）
+    - ⚖️ NPB減額制限ルールの適用
     """)
 
 # フッター
@@ -1944,4 +1971,3 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
-
