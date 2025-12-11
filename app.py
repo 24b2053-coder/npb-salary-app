@@ -542,12 +542,10 @@ if data_loaded:
     
     # ホーム
     if menu == "🏠 ホーム":
-        col1, col2,col3= st.columns([1,4,4])
+        col1, col2= st.columns(2)
         with col1:
-            st.write("")
-        with col2:
             st.metric("採用モデル", st.session_state.best_model_name)
-        with col3:
+        with col2:
             st.metric("R²スコア", f"{st.session_state.results[st.session_state.best_model_name]['R2']:.4f}")
 
         st.subheader("📖 使い方")
@@ -1600,7 +1598,7 @@ if data_loaded:
         with col1:
             sort_column = st.selectbox(
                 "ソート項目",
-                ["誤差率", "誤差額", "予測年俸（制限後）"],
+                ["誤差率", "誤差額"],
                 key="rank_sort_column"
             )
         with col2:
@@ -1758,7 +1756,7 @@ if data_loaded:
                         # データフレーム表示
                         df_display = df_top.copy()
                         df_display['実際の年俸'] = df_display['実際の年俸'].apply(lambda x: f"{x:.1f}")
-                        df_display['予測年俸（制限後）'] = df_display['予測年俸（制限後）'].apply(lambda x: f"{x:.1f}")
+                        df_display['予測年俸'] = df_display['予測年俸'].apply(lambda x: f"{x:.1f}")
                         df_display['誤差額'] = df_display['誤差額'].apply(lambda x: f"{x:.1f}")
                         df_display['誤差率'] = df_display['誤差率'].apply(lambda x: f"{x:.2f}%")
                         df_display['打率'] = df_display['打率'].apply(lambda x: f"{x:.3f}")
@@ -1959,6 +1957,7 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
+
 
 
 
