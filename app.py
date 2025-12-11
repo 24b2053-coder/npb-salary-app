@@ -596,7 +596,7 @@ if data_loaded:
             filtered_players = sorted_players
         
         selected_player = st.selectbox(
-            f"選手を選択してください ({len(filtered_players)}人)",
+            f"選手を選択してください",
             options=filtered_players,
             index=0,
             key="player_select_main"
@@ -959,7 +959,7 @@ if data_loaded:
             filtered_players = sorted_players
         
         selected_player = st.selectbox(
-            f"選手を選択してください ({len(filtered_players)}人)",
+            f"選手を選択してください",
             options=filtered_players,
             index=0,
             key="model_compare_player_select"
@@ -1959,6 +1959,7 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
+
 
 
 
