@@ -26,7 +26,7 @@ st.markdown("""
     position: fixed !important;
     top: 0;
     left: 0;
-    width: 285px !important;
+    width: 290px !important;
     height: 100vh !important;
     background-color: #ffe4e9 !important;
     border-right: 1px solid #e0e0e0;
@@ -1926,5 +1926,6 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
+
 
 
