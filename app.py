@@ -1255,8 +1255,7 @@ if data_loaded:
             titles = st.number_input("タイトル数", min_value=0, max_value=10, value=0, key="custom_titles")
             previous_salary = st.number_input("前年年俸（百万円）", min_value=0, max_value=10000, value=0, 
                                             help="減額制限チェック用。0の場合はチェックなし", key="custom_prev_salary")
-            age = st.number_input("年齢", min_value=18, max_value=50, value=28, 
-                                help="選手の年齢を入力してください", key="custom_age")
+            age = st.number_input("年齢", min_value=18, max_value=50, value=28, key="custom_age")
         
         st.markdown("---")
         
@@ -1962,4 +1961,5 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
+
 
