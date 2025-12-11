@@ -1744,8 +1744,6 @@ if data_loaded:
                         
                         # 統計サマリー
                         col1, col2, col3, col4 = st.columns(4)
-                        with col1:
-                            st.metric("分析対象選手数", f"{len(df_ranking)}人")
                         with col2:
                             avg_error_rate = df_ranking['誤差率'].mean()
                             st.metric("平均誤差率", f"{avg_error_rate:.1f}%")
@@ -1755,6 +1753,9 @@ if data_loaded:
                         with col4:
                             best_error_rate = df_ranking['誤差率'].min()
                             st.metric("最小誤差率", f"{best_error_rate:.1f}%")
+                        with col4:
+                            best_error_rate = df_ranking['誤差率'].min()
+                            st.metric("最大誤差率", f"{worst_error_rate:.1f}%")
                         
                         st.markdown("---")
                         st.subheader(f"📊 Top {top_n} ランキング ({rank_year}年)")
@@ -1963,6 +1964,7 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
+
 
 
 
