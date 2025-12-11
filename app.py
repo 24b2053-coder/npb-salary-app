@@ -1883,7 +1883,7 @@ if data_loaded:
                                 hide_index=True
                             )
                         # --- グラフ作成（サイズ調整） ---
-                        fig, ax = plt.subplots(figsize=(10, 5))  # 👈 ← ここでサイズ調整
+                        fig, ax = plt.subplots(figsize=(5, 5))  # 👈 ← ここでサイズ調整
                         ax.bar(error_dist.index, error_dist.values)
                         ax.set_xlabel("誤差率区分")
                         ax.set_ylabel("選手数")
@@ -1944,3 +1944,4 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
+
