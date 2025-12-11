@@ -1237,8 +1237,15 @@ if data_loaded:
             double_plays = st.number_input("併殺打", min_value=0, max_value=50, value=10, key="custom_gdp")
             sac_hits = st.number_input("犠打", min_value=0, max_value=50, value=2, key="custom_sh")
             sac_flies = st.number_input("犠飛", min_value=0, max_value=30, value=5, key="custom_sf")
-            
+        
         with col2:
+            st.markdown("**タイトル・前年年俸・年齢**")
+            titles = st.number_input("タイトル数", min_value=0, max_value=10, value=0, key="custom_titles")
+            previous_salary = st.number_input("前年年俸（百万円）", min_value=0, max_value=10000, value=0, 
+                                            help="減額制限チェック用。0の場合はチェックなし", key="custom_prev_salary")
+            age = st.number_input("年齢", min_value=18, max_value=50, value=28, key="custom_age")
+            
+         with col3:
             st.markdown("**指標（自動計算）**")
             # 打率・出塁率・長打率は自動計算
             avg = hits / at_bats if at_bats > 0 else 0.0
@@ -1248,14 +1255,6 @@ if data_loaded:
             st.metric("打率", f"{avg:.3f}")
             st.metric("出塁率", f"{obp:.3f}")
             st.metric("長打率", f"{slg:.3f}")
-        
-        with col3:
-            st.markdown("**タイトル・前年年俸・年齢**")
-            titles = st.number_input("タイトル数", min_value=0, max_value=10, value=0, key="custom_titles")
-            previous_salary = st.number_input("前年年俸（百万円）", min_value=0, max_value=10000, value=0, 
-                                            help="減額制限チェック用。0の場合はチェックなし", key="custom_prev_salary")
-            age = st.number_input("年齢", min_value=18, max_value=50, value=28, key="custom_age")
-        
         st.markdown("---")
         
         if st.button("🎯 年俸予測実行", type="primary", key="custom_predict_button"):
@@ -1601,7 +1600,7 @@ if data_loaded:
         with col1:
             sort_column = st.selectbox(
                 "ソート項目",
-                ["誤差率", "誤差額", "予測年俸"],
+                ["誤差率", "誤差額", "予測年俸（制限後）"],
                 key="rank_sort_column"
             )
         with col2:
@@ -1960,9 +1959,3 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
-
-
-
-
-
-
