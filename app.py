@@ -1782,7 +1782,7 @@ if data_loaded:
                                 with col1:
                                     st.metric("実際の年俸", f"{row['実際の年俸']:.1f}百万円")
                                 with col2:
-                                    st.metric("予測年俸", f"{row['予測年俸（制限後）']:.1f}百万円")
+                                    st.metric("予測年俸", f"{row['予測年俸']:.1f}百万円")
                                 with col3:
                                     st.metric("誤差額", f"{row['誤差額']:.1f}百万円")
                                 with col4:
@@ -1959,6 +1959,7 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
+
 
 
 
