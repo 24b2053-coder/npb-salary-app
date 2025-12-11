@@ -1873,10 +1873,7 @@ if data_loaded:
                         
                         error_dist = df_ranking['誤差率区分'].value_counts().sort_index()
                         
-                        col1, col2 = st.columns([1, 2])
-                        
-                        with col1:
-                            st.dataframe(
+                        st.dataframe(
                                 pd.DataFrame({
                                     '誤差率区分': error_dist.index,
                                     '選手数': error_dist.values,
@@ -1885,18 +1882,6 @@ if data_loaded:
                                 use_container_width=True,
                                 hide_index=True
                             )
-                        
-                        with col2:
-                            fig4, ax4 = plt.subplots(figsize=(8, 6))
-                            colors_pie = ['#2ecc71', '#27ae60', '#f39c12', '#e67e22', '#e74c3c', '#c0392b', '#95a5a6']
-                            ax4.pie(error_dist.values, 
-                                   labels=error_dist.index, 
-                                   autopct='%1.1f%%',
-                                   colors=colors_pie[:len(error_dist)],
-                                   startangle=90)
-                            ax4.set_title('誤差率区分別の選手分布', fontweight='bold')
-                            st.pyplot(fig4)
-                            plt.close(fig4)
                         
                         # CSV ダウンロード
                         st.markdown("---")
@@ -1951,6 +1936,7 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
+
 
 
 
