@@ -1601,7 +1601,7 @@ if data_loaded:
         # ランキングのソート基準を選択
         sort_by = st.radio(
             "ランキング基準",
-            ["誤差率（小さい順）", "誤差額（小さい順）", "予測年俸（高い順）"],
+            ["誤差率（小さい順）", "誤差額（小さい順）", "誤差率（大きい順）","誤差額（大きい順）","予測年俸（高い順）"],
             horizontal=True,
             key="rank_sort_by"
         )
@@ -1727,6 +1727,10 @@ if data_loaded:
                             df_ranking = df_ranking.sort_values('誤差率', ascending=True)
                         elif sort_by == "誤差額（小さい順）":
                             df_ranking = df_ranking.sort_values('誤差額', ascending=True)
+                        elif sort_by == "誤差率（大きい順）":
+                            df_ranking = df_ranking.sort_values('誤差率', ascending=False)
+                        elif sort_by == "誤差額（大きい順）":
+                            df_ranking = df_ranking.sort_values('誤差額', ascending=False)
                         else:  # 予測年俸（高い順）
                             df_ranking = df_ranking.sort_values('予測年俸（制限後）', ascending=False)
                         
@@ -1959,6 +1963,7 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
+
 
 
 
