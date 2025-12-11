@@ -535,7 +535,7 @@ if data_loaded:
     st.sidebar.markdown("### 🎯 機能選択")
     menu = st.sidebar.radio(
         "メニュー",
-        ["🏠 ホーム", "🔍 選手予測", "📊 選手比較", "🔬 モデル比較", "✏️ カスタム", "📈 性能", "📉 要因分析", "🏆 精度ランキング"],
+        ["🏠 ホーム", "🔍 選手予測", "📊 選手比較", "🔬 モデル比較", "✏️ カスタム比較", "📈 モデル性能", "📉 要因分析", "🏆 精度ランキング"],
         key="main_menu",
         label_visibility="collapsed"
     )
@@ -1201,7 +1201,7 @@ if data_loaded:
                         st.metric("予測幅", f"{range_pred:.1f}百万円")
     
     # カスタム入力予測
-    elif menu == "✏️ カスタム":
+    elif menu == "✏️ カスタム予測":
         st.header("✏️ カスタム入力予測")
         st.markdown("オリジナルの選手データを入力して年俸を予測します")
         # 入力フォーム
@@ -1480,7 +1480,7 @@ if data_loaded:
                     plt.close(fig5)
     
     # モデル性能
-    elif menu == "📈 性能":
+    elif menu == "📈 モデル性能":
         st.header("📈 モデル性能")
         
         model_data = []
@@ -1935,18 +1935,6 @@ else:
     ├── stats_2025.csv
     └── titles_2023&2024&2025.csv
     ```
-    
-    **方法2: 左サイドバーから手動アップロード**
-    
-    ### 🚀 機能
-    - ⚾ 選手個別の年俸予測（対数変換による精度向上）
-    - 📊 複数選手の比較分析
-    - 🔬 複数モデルでの同時予測と比較
-    - ✏️ オリジナル選手データでの予測
-    - 📈 予測モデルの性能評価
-    - 📉 年俸影響要因の分析
-    - 🏆 予測精度ランキング（誤差の少ない選手分析）
-    - ⚖️ NPB減額制限ルールの適用
     """)
 
 # フッター
@@ -1956,3 +1944,4 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
+
