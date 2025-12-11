@@ -1846,13 +1846,13 @@ if data_loaded:
                                             linewidth=0.5)
                         
                         # 完全一致の線
-                        max_val = max(df_ranking['実際の年俸'].max(), df_ranking['予測年俸（制限後）'].max())
+                        max_val = max(df_ranking['実際の年俸'].max(), df_ranking['予測年俸'].max())
                         ax3.plot([0, max_val], [0, max_val], 'r--', linewidth=2, alpha=0.5, label='完全一致')
                         
                         # Top 10 の選手名を表示
                         for _, row in top_10.iterrows():
                             ax3.annotate(row['選手名'], 
-                                       (row['実際の年俸'], row['予測年俸（制限後）']),
+                                       (row['実際の年俸'], row['予測年俸']),
                                        fontsize=8, 
                                        alpha=0.7,
                                        xytext=(5, 5),
@@ -1959,6 +1959,7 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
+
 
 
 
