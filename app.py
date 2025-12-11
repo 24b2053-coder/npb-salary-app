@@ -1536,7 +1536,7 @@ if data_loaded:
         )
         
         if len(title_groups) == 2:
-            diff = title_groups.loc['タイトル有り', '平均年俸（万円）'] - title_groups.loc['タイトル無し', '平均年俸（万円）']
+            diff = round(title_groups.loc['タイトル有り', '平均年俸（万円）'] - title_groups.loc['タイトル無し', '平均年俸（万円）'])
             st.metric("タイトル獲得による年俸増加", f"{diff:.1f}万円")
         
         st.markdown("---")
@@ -1924,6 +1924,7 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
+
 
 
 
