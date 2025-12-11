@@ -801,7 +801,7 @@ if data_loaded:
         ]['選手名'].unique()
         
         selected_players = st.multiselect(
-            "比較する選手を選択してください（最大5人）",
+            "比較する選手を2人以上選択してください（最大5人）",
             options=sorted(available_players),
             max_selections=5,
             key="compare_players_multiselect"
@@ -928,8 +928,7 @@ if data_loaded:
                         ax2.grid(axis='y', alpha=0.3)
                         st.pyplot(fig2)
                         plt.close(fig2)
-        else:
-            st.info("👆 2人以上の選手を選択してください")
+
     
     # 複数モデル比較
     elif menu == "🔬 モデル比較":
@@ -1961,5 +1960,6 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
+
 
 
