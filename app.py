@@ -1543,7 +1543,8 @@ if data_loaded:
         st.subheader("主要指標との相関")
         
         correlations = st.session_state.ml_df[
-            ['打率', '本塁打', '打点', '出塁率', '長打率', 'タイトル数','年齢', '年俸_円']
+            ['打率', '本塁打', '打点', '出塁率', '長打率', 'タイトル数','年齢','試合', '打席', '打数', '得点', '安打', '二塁打', '三塁打', 
+                '塁打', '盗塁', '盗塁刺', '四球', '死球', '三振', '併殺打', '犠打', '犠飛', '年俸_円']
         ].corr()['年俸_円'].sort_values(ascending=False)
         
         corr_data = []
@@ -1950,6 +1951,7 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
+
 
 
 
