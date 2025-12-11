@@ -1781,9 +1781,9 @@ if data_loaded:
                             with st.expander(f"#{row['順位']} {row['選手名']} - 誤差率: {row['誤差率']:.2f}%"):
                                 col1, col2, col3, col4 = st.columns(4)
                                 with col1:
-                                    st.metric("実際の年俸", f"{row['実際の年俸']:.1f}万円")
+                                    st.metric("実際の年俸(万円)", f"{row['実際の年俸(万円)']:.1f}万円")
                                 with col2:
-                                    st.metric("予測年俸", f"{row['予測年俸']:.1f}万円")
+                                    st.metric("予測年俸(万円)", f"{row['予測年俸(万円)']:.1f}万円")
                                 with col3:
                                     st.metric("誤差額", f"{row['誤差額']:.1f}万円")
                                 with col4:
@@ -1837,8 +1837,8 @@ if data_loaded:
                         fig3, ax3 = plt.subplots(figsize=(12, 8))
                         
                         # 誤差率でカラーマップ
-                        scatter = ax3.scatter(df_ranking['実際の年俸'], 
-                                            df_ranking['予測年俸'],
+                        scatter = ax3.scatter(df_ranking['実際の年俸(万円)'], 
+                                            df_ranking['予測年俸(万円)'],
                                             c=df_ranking['誤差率'], 
                                             cmap='RdYlGn_r',
                                             s=100, 
@@ -1847,7 +1847,7 @@ if data_loaded:
                                             linewidth=0.5)
                         
                         # 完全一致の線
-                        max_val = max(df_ranking['実際の年俸'].max(), df_ranking['予測年俸'].max())
+                        max_val = max(df_ranking['実際の年俸(万円)'].max(), df_ranking['予測年俸(万円)'].max())
                         ax3.plot([0, max_val], [0, max_val], 'r--', linewidth=2, alpha=0.5, label='完全一致')
                         
                         ax3.set_xlabel('実際の年俸（万円）', fontweight='bold')
@@ -1951,6 +1951,7 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
+
 
 
 
