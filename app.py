@@ -1602,7 +1602,7 @@ if data_loaded:
         with col1:
             sort_column = st.selectbox(
                 "ソート項目",
-                ["誤差率", "誤差額", "予測年俸"],
+                ["誤差率", "誤差額", "予測年俸(万円)"],
                 key="rank_sort_column"
             )
         with col2:
@@ -1925,6 +1925,7 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
+
 
 
 
