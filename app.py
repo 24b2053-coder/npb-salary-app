@@ -1484,7 +1484,7 @@ if data_loaded:
         for name, result in st.session_state.results.items():
             model_data.append({
                 'モデル': name,
-                'MAE（万円）': f"{result['MAE']/1e6:.2f}",
+                'MAE（万円）': f"{result['MAE']/10000:.2f}",
                 'R²スコア': f"{result['R2']:.4f}"
             })
         
@@ -1951,4 +1951,5 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
+
 
