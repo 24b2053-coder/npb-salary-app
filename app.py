@@ -1710,8 +1710,8 @@ if data_loaded:
                             ranking_data.append({
                                 '順位': 0,  # 後で設定
                                 '選手名': player,
-                                '実際の年俸': actual_salary / 10000,
-                                '予測年俸': display_salary / 10000,
+                                '実際の年俸(万円)': actual_salary / 10000,
+                                '予測年俸(万円)': display_salary / 10000,
                                 '誤差額': error_amount / 10000,
                                 '誤差率': error_rate,
                                 '減額制限': 'あり' if is_limited else 'なし',
@@ -1951,6 +1951,7 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
+
 
 
 
