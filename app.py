@@ -1595,13 +1595,21 @@ if data_loaded:
         
         # 予測年度を選択
         rank_year = st.selectbox("ランキング対象年度", [2024, 2025], index=1, key="rank_year_select")
-       # ランキングのソート基準を選択
-        sort_by = st.radio(
-            "ランキング基準",
-            ["誤差率（小さい順）", "誤差額（小さい順）", "誤差率（大きい順）","誤差額（大きい順）","予測年俸（低い順）","予測年俸（高い順）"],
-            horizontal=True,
-            key="rank_sort_by"
-        )
+        
+        # ランキングのソート基準を選択
+        col1, col2 = st.columns([2, 1])
+        with col1:
+            sort_column = st.selectbox(
+                "ソート項目",
+                ["誤差率", "誤差額", "予測年俸（制限後）"],
+                key="rank_sort_column"
+            )
+        with col2:
+            sort_order = st.radio(
+                "並び順",
+                ["昇順（小→大）", "降順（大→小）"],
+                key="rank_sort_order"
+            )
         
         # 表示件数を選択
         top_n = st.slider("表示件数", min_value=10, max_value=100, value=30, step=10, key="rank_top_n")
@@ -1719,21 +1727,10 @@ if data_loaded:
                     if ranking_data:
                         df_ranking = pd.DataFrame(ranking_data)
                         
-                        # ソート
-                        if sort_by == "誤差率（小さい順）":
-                            df_ranking = df_ranking.sort_values('誤差率', ascending=True)
-                        elif sort_by == "誤差額（小さい順）":
-                            df_ranking = df_ranking.sort_values('誤差額', ascending=True)
-                        elif sort_by == "誤差率（大きい順）":
-                            df_ranking = df_ranking.sort_values('誤差率', ascending=False)
-                        elif sort_by == "誤差額（大きい順）":
-                            df_ranking = df_ranking.sort_values('誤差額', ascending=False)
-                        elif sort_by == "予測年俸（低い順）":
-                            df_ranking = df_ranking.sort_values('予測年俸（制限後）', ascending=True)
-                        else:
-                            df_ranking = df_ranking.sort_values('予測年俸（制限後）', ascending=False)
+                        # ソート実行（昇順/降順を判定）
+                        ascending = (sort_order == "昇順（小→大）")
+                        df_ranking = df_ranking.sort_values(sort_column, ascending=ascending)
                         
-
                         # 順位を設定
                         df_ranking['順位'] = range(1, len(df_ranking) + 1)
                         
@@ -1756,7 +1753,8 @@ if data_loaded:
                             st.metric("最大誤差率", f"{worst_error_rate:.1f}%")
                         
                         st.markdown("---")
-                        st.subheader(f"📊 Top {top_n} ランキング ({rank_year}年)")
+                        sort_label = f"{sort_column}（{'小→大' if ascending else '大→小'}）"
+                        st.subheader(f"📊 Top {top_n} ランキング ({rank_year}年) - {sort_label}")
                         
                         # データフレーム表示
                         df_display = df_top.copy()
@@ -1962,7 +1960,6 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
-
 
 
 
