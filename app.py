@@ -1245,7 +1245,7 @@ if data_loaded:
                                             help="減額制限チェック用。0の場合はチェックなし", key="custom_prev_salary")
             age = st.number_input("年齢", min_value=18, max_value=50, value=28, key="custom_age")
             
-         with col3:
+        with col3:
             st.markdown("**指標（自動計算）**")
             # 打率・出塁率・長打率は自動計算
             avg = hits / at_bats if at_bats > 0 else 0.0
@@ -1959,3 +1959,4 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
+
