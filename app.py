@@ -1596,144 +1596,21 @@ if data_loaded:
         # 予測年度を選択
         rank_year = st.selectbox("ランキング対象年度", [2024, 2025], index=1, key="rank_year_select")
         
-        # ランキングのソート基準を選択
-        sort_by = st.radio(
-            "ランキング基準",
-            ["誤差率（小さい順）", "誤差額（小さい順）", "誤差率（大きい順）","誤差額（大きい順）","予測年俸（低い順）","予測年俸（高い順）"],
-            horizontal=True,
-            key="rank_sort_by"
-        )
-        
-        # 表示件数を選択
-        top_n = st.slider("表示件数", min_value=10, max_value=100, value=30, step=10, key="rank_top_n")
-        
-        if st.button("📊 ランキング作成", type="primary", key="rank_create_button"):
-            with st.spinner('🔄 全選手の予測を計算中...'):
-                stats_year = rank_year - 1
-                
-                # 対象選手を取得（実際の年俸データがある選手のみ）
-                actual_salary_players = st.session_state.salary_long[
-                    st.session_state.salary_long['年度'] == rank_year
-                ]['選手名'].unique()
-                
-                # 成績データがある選手を取得
-                stats_players = st.session_state.stats_all_with_titles[
-                    st.session_state.stats_all_with_titles['年度'] == stats_year
-                ]['選手名'].unique()
-                
-                # 両方のデータがある選手のみを対象
-                target_players = list(set(actual_salary_players) & set(stats_players))
-                
-                if not target_players:
-                    st.error(f"❌ {rank_year}年の実際の年俸データと{stats_year}年の成績データが両方ある選手が見つかりません")
-                else:
-                    ranking_data = []
-                    
-                    # プログレスバー
-                    progress_bar = st.progress(0)
-                    status_text = st.empty()
-                    
-                    for idx, player in enumerate(target_players):
-                        # プログレス更新
-                        progress = (idx + 1) / len(target_players)
-                        progress_bar.progress(progress)
-                        status_text.text(f"処理中: {player} ({idx + 1}/{len(target_players)})")
-                        
-                        # 選手の成績データを取得
-                        player_stats = st.session_state.stats_all_with_titles[
-                            (st.session_state.stats_all_with_titles['選手名'] == player) &
-                            (st.session_state.stats_all_with_titles['年度'] == stats_year)
-                        ]
-                        
-                        if player_stats.empty:
-                            continue
-                        
-                        player_stats = player_stats.iloc[0]
-                        
-                        # 特徴量を作成
-                        if '年齢' not in st.session_state.feature_cols:
-                            features = player_stats[st.session_state.feature_cols].values.reshape(1, -1)
-                        else:
-                            if '年齢' in player_stats.index:
-                                features = player_stats[st.session_state.feature_cols].values.reshape(1, -1)
-                            else:
-                                features_list = player_stats[st.session_state.feature_cols[:-1]].values.tolist()
-                                features_list.append(28)
-                                features = np.array([features_list])
-                        
-                        # 予測
-                        if st.session_state.best_model_name == '線形回帰':
-                            features_scaled = st.session_state.scaler.transform(features)
-                            predicted_salary_log = st.session_state.best_model.predict(features_scaled)[0]
-                        else:
-                            predicted_salary_log = st.session_state.best_model.predict(features)[0]
-                        
-                        predicted_salary = np.expm1(predicted_salary_log)
-                        
-                        # 十万円単位で四捨五入
-                        predicted_salary = round(predicted_salary / 100000) * 100000
-                        
-                        # 前年の年俸を取得
-                        previous_salary_data = st.session_state.salary_long[
-                            (st.session_state.salary_long['選手名'] == player) &
-                            (st.session_state.salary_long['年度'] == stats_year)
-                        ]
-                        previous_salary = previous_salary_data['年俸_円'].values[0] if not previous_salary_data.empty else None
-                        
-                        # 減額制限チェック
-                        display_salary = predicted_salary
-                        is_limited = False
-                        if previous_salary is not None:
-                            is_limited, min_salary, reduction_rate = check_salary_reduction_limit(predicted_salary, previous_salary)
-                            if is_limited:
-                                display_salary = min_salary
-                        
-                        # 実際の年俸を取得
-                        actual_salary_data = st.session_state.salary_long[
-                            (st.session_state.salary_long['選手名'] == player) &
-                            (st.session_state.salary_long['年度'] == rank_year)
-                        ]
-                        actual_salary = actual_salary_data['年俸_円'].values[0] if not actual_salary_data.empty else None
-                        
-                        if actual_salary is not None:
-                            # 誤差を計算
-                            error_amount = abs(display_salary - actual_salary)
-                            error_rate = (error_amount / actual_salary) * 100
-                            
-                            ranking_data.append({
-                                '順位': 0,  # 後で設定
-                                '選手名': player,
-                                '実際の年俸': actual_salary / 1e6,
-                                '予測年俸（制限後）': display_salary / 1e6,
-                                '誤差額': error_amount / 1e6,
-                                '誤差率': error_rate,
-                                '減額制限': 'あり' if is_limited else 'なし',
-                                '打率': player_stats['打率'],
-                                '本塁打': int(player_stats['本塁打']),
-                                '打点': int(player_stats['打点']),
-                                'タイトル数': int(player_stats['タイトル数'])
-                            })
-                    
-                    progress_bar.empty()
-                    status_text.empty()
-                    
-                    if ranking_data:
-                        df_ranking = pd.DataFrame(ranking_data)
-                        
-                        # ソート
-                        if sort_by == "誤差率（小さい順）":
-                            df_ranking = df_ranking.sort_values('誤差率', ascending=True)
-                        elif sort_by == "誤差額（小さい順）":
-                            df_ranking = df_ranking.sort_values('誤差額', ascending=True)
-                        elif sort_by == "誤差率（大きい順）":
-                            df_ranking = df_ranking.sort_values('誤差率', ascending=False)
-                        elif sort_by == "誤差額（大きい順）":
-                            df_ranking = df_ranking.sort_values('誤差額', ascending=False)
-                        elif sort_by == "予測年俸（低い順）":
-                            df_ranking = df_ranking.sort_values('予測年俸（制限後）', ascending=True)
-                        else:
-                            df_ranking = df_ranking.sort_values('予測年俸（制限後）', ascending=False)
-                        
+        # ランキングのソート基準（2段階選択）
+        sort_key = st.selectbox( "ソート項目",["誤差率", "誤差額", "予測年俸"])
+        sort_order = st.radio("並び順",["低い順", "高い順"],horizontal=True)
+# 表示件数を選択
+        top_n = st.slider("表示件数", min_value=10, max_value=100, value=30, step=10)
+        if ranking_data:
+            df_ranking = pd.DataFrame(ranking_data)
+            column_map = {"誤差率": "誤差率","誤差額": "誤差額","予測年俸": "予測年俸（制限後）"}
+            ascending_flag = (sort_order == "低い順")
+
+            df_ranking = df_ranking.sort_values(
+                column_map[sort_key],
+                ascending=ascending_flag
+    )
+
                         # 順位を設定
                         df_ranking['順位'] = range(1, len(df_ranking) + 1)
                         
@@ -1962,6 +1839,7 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
+
 
 
 
