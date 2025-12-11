@@ -1103,7 +1103,7 @@ if data_loaded:
                         
                         # 実際の年俸がある場合は線を追加
                         if actual_salary:
-                            ax1.axvline(x=actual_salary/1e6, color='green', linestyle='--', 
+                            ax1.axvline(x=actual_salary/10000, color='green', linestyle='--', 
                                        linewidth=2, label='実際の年俸', alpha=0.8)
                         
                         ax1.set_yticks(x)
@@ -1951,5 +1951,6 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
+
 
 
