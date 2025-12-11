@@ -542,10 +542,11 @@ if data_loaded:
     
     # ホーム
     if menu == "🏠 ホーム":
-        col1, col2= st.columns([2,2])
+        col1, col2,col3= st.columns([1,2,2])
         with col1:
-            st.metric("採用モデル", st.session_state.best_model_name)
         with col2:
+            st.metric("採用モデル", st.session_state.best_model_name)
+        with col3:
             st.metric("R²スコア", f"{st.session_state.results[st.session_state.best_model_name]['R2']:.4f}")
 
         # ★ 年齢が含まれているか確認 ★
@@ -1969,4 +1970,5 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
+
 
