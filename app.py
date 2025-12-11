@@ -1837,7 +1837,7 @@ if data_loaded:
                         
                         # 誤差率でカラーマップ
                         scatter = ax3.scatter(df_ranking['実際の年俸'], 
-                                            df_ranking['予測年俸（制限後）'],
+                                            df_ranking['予測年俸'],
                                             c=df_ranking['誤差率'], 
                                             cmap='RdYlGn_r',
                                             s=100, 
@@ -1959,6 +1959,7 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
+
 
 
 
