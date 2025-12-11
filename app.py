@@ -542,10 +542,12 @@ if data_loaded:
     
     # ホーム
     if menu == "🏠 ホーム":
-        col1, col2= st.columns(2)
+        col1, col2,col3= st.columns([1,4,4])
         with col1:
-            st.metric("採用モデル", st.session_state.best_model_name)
+            st.write("")
         with col2:
+            st.metric("採用モデル", st.session_state.best_model_name)
+        with col3:
             st.metric("R²スコア", f"{st.session_state.results[st.session_state.best_model_name]['R2']:.4f}")
 
         st.subheader("📖 使い方")
@@ -1598,7 +1600,7 @@ if data_loaded:
         with col1:
             sort_column = st.selectbox(
                 "ソート項目",
-                ["誤差率", "誤差額"],
+                ["誤差率", "誤差額", "予測年俸（制限後）"],
                 key="rank_sort_column"
             )
         with col2:
@@ -1756,7 +1758,7 @@ if data_loaded:
                         # データフレーム表示
                         df_display = df_top.copy()
                         df_display['実際の年俸'] = df_display['実際の年俸'].apply(lambda x: f"{x:.1f}")
-                        df_display['予測年俸'] = df_display['予測年俸'].apply(lambda x: f"{x:.1f}")
+                        df_display['予測年俸（制限後）'] = df_display['予測年俸（制限後）'].apply(lambda x: f"{x:.1f}")
                         df_display['誤差額'] = df_display['誤差額'].apply(lambda x: f"{x:.1f}")
                         df_display['誤差率'] = df_display['誤差率'].apply(lambda x: f"{x:.2f}%")
                         df_display['打率'] = df_display['打率'].apply(lambda x: f"{x:.3f}")
@@ -1780,7 +1782,7 @@ if data_loaded:
                                 with col1:
                                     st.metric("実際の年俸", f"{row['実際の年俸']:.1f}百万円")
                                 with col2:
-                                    st.metric("予測年俸", f"{row['予測年俸']:.1f}百万円")
+                                    st.metric("予測年俸", f"{row['予測年俸（制限後）']:.1f}百万円")
                                 with col3:
                                     st.metric("誤差額", f"{row['誤差額']:.1f}百万円")
                                 with col4:
@@ -1835,7 +1837,7 @@ if data_loaded:
                         
                         # 誤差率でカラーマップ
                         scatter = ax3.scatter(df_ranking['実際の年俸'], 
-                                            df_ranking['予測年俸'],
+                                            df_ranking['予測年俸（制限後）'],
                                             c=df_ranking['誤差率'], 
                                             cmap='RdYlGn_r',
                                             s=100, 
@@ -1844,13 +1846,13 @@ if data_loaded:
                                             linewidth=0.5)
                         
                         # 完全一致の線
-                        max_val = max(df_ranking['実際の年俸'].max(), df_ranking['予測年俸'].max())
+                        max_val = max(df_ranking['実際の年俸'].max(), df_ranking['予測年俸（制限後）'].max())
                         ax3.plot([0, max_val], [0, max_val], 'r--', linewidth=2, alpha=0.5, label='完全一致')
                         
                         # Top 10 の選手名を表示
                         for _, row in top_10.iterrows():
                             ax3.annotate(row['選手名'], 
-                                       (row['実際の年俸'], row['予測年俸']),
+                                       (row['実際の年俸'], row['予測年俸（制限後）']),
                                        fontsize=8, 
                                        alpha=0.7,
                                        xytext=(5, 5),
@@ -1957,8 +1959,3 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
-
-
-
-
-
