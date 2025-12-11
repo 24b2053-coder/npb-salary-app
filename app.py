@@ -1882,18 +1882,6 @@ if data_loaded:
                                 use_container_width=True,
                                 hide_index=True
                             )
-                        
-                        # CSV ダウンロード
-                        st.markdown("---")
-                        st.subheader("💾 データダウンロード")
-                        
-                        csv = df_ranking.to_csv(index=False, encoding='utf-8-sig')
-                        st.download_button(
-                            label="📥 ランキングデータをダウンロード (CSV)",
-                            data=csv,
-                            file_name=f"prediction_ranking_{rank_year}.csv",
-                            mime="text/csv"
-                        )
                     else:
                         st.error("❌ ランキングを作成できませんでした")
 
@@ -1936,5 +1924,6 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
+
 
 
