@@ -1038,10 +1038,10 @@ if data_loaded:
                         
                         model_predictions.append({
                             'モデル': model_name,
-                            '予測年俸（制限前）': pred_salary / 1e6,
-                            '予測年俸（制限後）': display_salary / 1e6,
+                            '予測年俸（制限前）': pred_salary / 10000,
+                            '予測年俸（制限後）': display_salary / 10000,
                             '減額制限': 'あり' if is_limited else 'なし',
-                            'MAE': model_info['MAE'] / 1e6,
+                            'MAE': model_info['MAE'] / 10000,
                             'R²': model_info['R2'],
                             '誤差率(%)': error_pct if error_pct is not None else None
                         })
@@ -1299,15 +1299,15 @@ if data_loaded:
                     is_limited = False
                     display_salary = pred_salary
                     if previous_salary > 0:
-                        prev_salary_yen = previous_salary * 1e6
+                        prev_salary_yen = previous_salary * 10000
                         is_limited, min_salary, reduction_rate = check_salary_reduction_limit(pred_salary, prev_salary_yen)
                         if is_limited:
                             display_salary = min_salary
                     
                     predictions.append({
                         'モデル': model_name,
-                        '予測年俸': pred_salary / 1e6,
-                        '制限後年俸': display_salary / 1e6,
+                        '予測年俸': pred_salary / 10000,
+                        '制限後年俸': display_salary / 10000,
                         '減額制限': 'あり' if is_limited else 'なし'
                     })
                 
@@ -1710,9 +1710,9 @@ if data_loaded:
                             ranking_data.append({
                                 '順位': 0,  # 後で設定
                                 '選手名': player,
-                                '実際の年俸': actual_salary / 1e6,
-                                '予測年俸': display_salary / 1e6,
-                                '誤差額': error_amount / 1e6,
+                                '実際の年俸': actual_salary / 10000,
+                                '予測年俸': display_salary / 10000,
+                                '誤差額': error_amount / 10000,
                                 '誤差率': error_rate,
                                 '減額制限': 'あり' if is_limited else 'なし',
                                 '打率': player_stats['打率'],
@@ -1951,6 +1951,7 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
+
 
 
 
