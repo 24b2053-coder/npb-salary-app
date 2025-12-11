@@ -1758,8 +1758,8 @@ if data_loaded:
                         
                         # データフレーム表示
                         df_display = df_top.copy()
-                        df_display['実際の年俸'] = df_display['実際の年俸'].apply(lambda x: f"{x:.1f}")
-                        df_display['予測年俸'] = df_display['予測年俸'].apply(lambda x: f"{x:.1f}")
+                        df_display['実際の年俸(万円)'] = df_display['実際の年俸(万円)'].apply(lambda x: f"{x:.1f}")
+                        df_display['予測年俸(万円)'] = df_display['予測年俸(万円)'].apply(lambda x: f"{x:.1f}")
                         df_display['誤差額'] = df_display['誤差額'].apply(lambda x: f"{x:.1f}")
                         df_display['誤差率'] = df_display['誤差率'].apply(lambda x: f"{x:.2f}%")
                         df_display['打率'] = df_display['打率'].apply(lambda x: f"{x:.3f}")
@@ -1951,6 +1951,7 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
+
 
 
 
