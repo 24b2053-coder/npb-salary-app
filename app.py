@@ -1740,8 +1740,6 @@ if data_loaded:
                         # Top N のみ表示
                         df_top = df_ranking.head(top_n)
                         
-                        st.success(f"✅ {len(ranking_data)}人の選手を分析しました！")
-                        
                         # 統計サマリー
                         col1, col2, col3, col4 = st.columns(4)
                         with col1:
@@ -1964,3 +1962,4 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
+
