@@ -26,7 +26,7 @@ st.markdown("""
     position: fixed !important;
     top: 0;
     left: 0;
-    width: 293px !important;
+    width: 280px !important;
     height: 100vh !important;
     background-color: #ffe4e9 !important;
     border-right: 1px solid #e0e0e0;
@@ -47,7 +47,7 @@ st.markdown("""
 [data-testid="stSidebarContent"] {
     overflow-y: auto !important;
     height: 100vh !important;
-    padding: 0 1rem 1rem 1rem !important;
+    padding: 0 0.5rem 1rem 0.5rem !important;
     margin: 0 !important;
 }
 
@@ -87,15 +87,41 @@ st.markdown("""
     cursor: pointer !important;
 }
 
+/* サイドバーのラジオボタンラベルの文字サイズを小さく */
+[data-testid="stSidebar"] label[data-baseweb="radio"] {
+    font-size: 13px !important;
+    line-height: 1.2 !important;
+}
+
+/* サイドバーのラジオボタン全体を小さく */
+[data-testid="stSidebar"] [data-testid="stVerticalBlock"] > div {
+    padding: 0.2rem 0 !important;
+}
+
 /* ====== メインエリア ====== */
 .main {
     margin-left: 280px !important;
+    transition: margin-left 0.3s ease !important;
+}
+
+/* サイドバーが閉じている時はメインエリアを全幅に */
+[data-testid="stSidebar"][aria-expanded="false"] ~ .main,
+[data-testid="collapsedControl"] ~ .main {
+    margin-left: 0 !important;
 }
 
 /* メインの最大幅を固定（揺れ防止） */
 .block-container {
     max-width: 1400px !important;
     padding-top: 2rem !important;
+}
+
+/* サイドバーが閉じている時はブロックコンテナを広く */
+[data-testid="stSidebar"][aria-expanded="false"] ~ .main .block-container,
+body:not(:has([data-testid="stSidebar"])) .block-container {
+    max-width: 100% !important;
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
 }
 
 /* ====== 表（テーブル）の揺れ対策 ====== */
@@ -156,6 +182,10 @@ h1:hover a, h2:hover a, h3:hover a, h4:hover a, h5:hover a, h6:hover a {
     .block-container {
         max-width: 100% !important;
         padding: 1rem !important;
+    }
+    
+    [data-testid="stSidebar"] label[data-baseweb="radio"] {
+        font-size: 12px !important;
     }
 }
 
@@ -505,7 +535,7 @@ if data_loaded:
     st.sidebar.markdown("### 🎯 機能選択")
     menu = st.sidebar.radio(
         "メニュー",
-        ["🏠 ホーム", "🔍 選手検索・予測", "📊 複数選手比較", "🔬 複数モデル比較", "✏️ カスタム入力予測", "📈 モデル性能", "📉 要因分析", "🏆 予測精度ランキング"],
+        ["🏠 ホーム", "🔍 選手予測", "📊 選手比較", "🔬 モデル比較", "✏️ カスタム", "📈 性能", "📉 要因分析", "🏆 精度ランキング"],
         key="main_menu",
         label_visibility="collapsed"
     )
@@ -538,13 +568,13 @@ if data_loaded:
         2. **選手名**を入力して年俸を予測
         
         ### 機能一覧
-        - 🔍 **選手検索・予測**: 個別選手の年俸予測とレーダーチャート
-        - 📊 **複数選手比較**: 最大5人の選手を比較
-        - 🔬 **複数モデル比較**: 全モデルで同時予測して比較
-        - ✏️ **カスタム入力予測**: オリジナル選手データで予測
-        - 📈 **モデル性能**: 予測モデルの詳細情報
+        - 🔍 **選手予測**: 個別選手の年俸予測とレーダーチャート
+        - 📊 **選手比較**: 最大5人の選手を比較
+        - 🔬 **モデル比較**: 全モデルで同時予測して比較
+        - ✏️ **カスタム**: オリジナル選手データで予測
+        - 📈 **性能**: 予測モデルの詳細情報
         - 📉 **要因分析**: 年俸に影響を与える要因の分析
-        - 🏆 **予測精度ランキング**: 誤差が少ない選手の分析
+        - 🏆 **精度ランキング**: 誤差が少ない選手の分析
         
         ### ⚖️ NPB減額制限ルール
         - **1億円以上**: 最大40%まで減額可能（最低60%保証）
@@ -552,7 +582,7 @@ if data_loaded:
         """)
     
     # 選手検索・予測
-    elif menu == "🔍 選手検索・予測":
+    elif menu == "🔍 選手予測":
         st.header("🔍 選手検索・予測")
         
         available_players = st.session_state.stats_all_with_titles[
@@ -772,7 +802,7 @@ if data_loaded:
                         plt.close(fig2)
     
     # 複数選手比較
-    elif menu == "📊 複数選手比較":
+    elif menu == "📊 選手比較":
         st.header("📊 複数選手比較")
         
         available_players = st.session_state.stats_all_with_titles[
@@ -908,7 +938,7 @@ if data_loaded:
             st.info("👆 2人以上の選手を選択してください")
     
     # 複数モデル比較
-    elif menu == "🔬 複数モデル比較":
+    elif menu == "🔬 モデル比較":
         st.header("🔬 複数モデル比較")
         st.markdown("同じ選手の年俸を全モデルで予測し、結果を比較します")
         
@@ -1171,7 +1201,7 @@ if data_loaded:
                         st.metric("予測幅", f"{range_pred:.1f}百万円")
     
     # カスタム入力予測
-    elif menu == "✏️ カスタム入力予測":
+    elif menu == "✏️ カスタム":
         st.header("✏️ カスタム入力予測")
         st.markdown("オリジナルの選手データを入力して年俸を予測します")
         # 入力フォーム
@@ -1450,7 +1480,7 @@ if data_loaded:
                     plt.close(fig5)
     
     # モデル性能
-    elif menu == "📈 モデル性能":
+    elif menu == "📈 性能":
         st.header("📈 モデル性能")
         
         model_data = []
@@ -1561,7 +1591,7 @@ if data_loaded:
         plt.close(fig3)
 
     # 予測精度ランキング
-    elif menu == "🏆 予測精度ランキング":
+    elif menu == "🏆 精度ランキング":
         st.header("🏆 予測精度ランキング")
         st.markdown("実際の年俸データがある選手の予測精度を分析し、ランキング表示します")
         
@@ -1926,7 +1956,3 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
-
-
-
-
