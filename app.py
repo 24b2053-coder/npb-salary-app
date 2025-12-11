@@ -1525,8 +1525,8 @@ if data_loaded:
             st.session_state.ml_df['タイトル数'] > 0
         )['年俸_円'].agg(['count', 'mean', 'median'])
         
-        title_groups['mean'] = title_groups['mean'] / 1e6
-        title_groups['median'] = title_groups['median'] / 1e6
+        title_groups['mean'] = title_groups['mean'] / 10000
+        title_groups['median'] = title_groups['median'] / 10000
         title_groups.index = ['タイトル無し', 'タイトル有り']
         title_groups.columns = ['選手数', '平均年俸（万円）', '中央値（万円）']
         
@@ -1951,3 +1951,4 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
+
