@@ -550,18 +550,6 @@ if data_loaded:
         with col3:
             st.metric("R²スコア", f"{st.session_state.results[st.session_state.best_model_name]['R2']:.4f}")
 
-        # ★ 年齢が含まれているか確認 ★
-        st.markdown("---")
-        st.subheader("🔍 デバッグ情報")
-        st.write(f"**特徴量リスト**: {st.session_state.feature_cols}")
-        st.write(f"**特徴量数**: {len(st.session_state.feature_cols)}")
-        st.write(f"**年齢が含まれているか**: {'年齢' in st.session_state.feature_cols}")
-
-        # 年齢データの統計
-        if '年齢' in st.session_state.ml_df.columns:
-            st.write(f"**年齢の平均**: {st.session_state.ml_df['年齢'].mean():.1f}歳")
-            st.write(f"**年齢の範囲**: {st.session_state.ml_df['年齢'].min():.0f}〜{st.session_state.ml_df['年齢'].max():.0f}歳")
-        
         st.subheader("📖 使い方")
         st.markdown("""
         1. **左サイドバー**のメニューから機能を選択
@@ -1971,6 +1959,7 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
+
 
 
 
