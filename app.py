@@ -570,8 +570,8 @@ if data_loaded:
 
         ### 使用したサイトのリンク
         - **成績**: [NPB公式サイト](https://npb.jp/)
-        - **年俸**: [Baseball Freak](https://baseball-freak.com/)
-        - **年齢**: [Baseball Money](https://www.baseball-money.net/)
+        - **年齢**: [Baseball Freak](https://baseball-freak.com/)
+        - **年俸**: [Baseball Money](https://www.baseball-money.net/)
 
         """)
     
@@ -1931,6 +1931,7 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
+
 
 
 
