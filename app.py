@@ -567,6 +567,11 @@ if data_loaded:
         ### ⚖️ NPB減額制限ルール
         - **1億円以上**: 最大40%まで減額可能（最低60%保証）
         - **1億円未満**: 最大25%まで減額可能（最低75%保証）
+
+        ### 使用したサイトのリンク
+        - [NPB公式サイト](https://npb.jp/)
+        - [Baseball Freak](https://baseball-freak.com/)
+        - [Baseball Money](https://www.baseball-money.net/)
         """)
     
     # 選手検索・予測
@@ -1925,6 +1930,7 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
+
 
 
 
