@@ -646,7 +646,7 @@ if data_loaded:
     st.sidebar.markdown("### 🎯 機能選択")
     menu = st.sidebar.radio(
         "メニュー",
-        ["🏠 ホーム", "🔍 選手予測", "📊 選手比較", "🔬 モデル比較", "✏️ カスタム", "📈 性能", "📉 要因分析", "🏆 精度ランキング", "📜 予測履歴"],
+        ["🏠 ホーム", "🔍 選手予測", "📊 選手比較", "🔬 モデル比較", "✏️ カスタム", "📈 性能", "📉 要因分析", "🏆 精度ランキング", "💰 年俸別予測", "📜 予測履歴"],
         key="main_menu",
         label_visibility="collapsed"
     )
@@ -2779,6 +2779,7 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
+
 
 
 
