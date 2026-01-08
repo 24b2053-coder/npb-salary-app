@@ -407,33 +407,31 @@ if 'prediction_history' not in st.session_state:
     st.session_state.prediction_history = []
 
     def add_to_history(player_name, predict_year, predicted_salary, actual_salary, previous_salary, 
-                        stats_dict, model_name, is_limited=False, limited_salary=None):
+                   stats_dict, model_name, is_limited=False, limited_salary=None):
     """予測履歴に追加（最大20件）"""
-    # インポート文を削除
     
     # 日本時間を取得（UTC+9時間）
-        jst_time = datetime.utcnow() + timedelta(hours=9)
+    jst_time = datetime.utcnow() + timedelta(hours=9)
     
-        history_item = {
-            '予測日時': jst_time,
-            '選手名': player_name,
-            '予測年度': predict_year,
-            '予測年俸': predicted_salary,
-            '制限後年俸': limited_salary if is_limited else predicted_salary,
-            '実際の年俸': actual_salary,
-            '前年年俸': previous_salary,
-            '減額制限': is_limited,
-            'モデル': model_name,
-            '成績': stats_dict
-        }
+    history_item = {
+        '予測日時': jst_time.strftime('%Y-%m-%d %H:%M:%S'),
+        '選手名': player_name,
+        '予測年度': predict_year,
+        '予測年俸': predicted_salary,
+        '制限後年俸': limited_salary if is_limited else predicted_salary,
+        '実際の年俸': actual_salary,
+        '前年年俸': previous_salary,
+        '減額制限': is_limited,
+        'モデル': model_name,
+        '成績': stats_dict
+    }
     
     # 先頭に追加
     st.session_state.prediction_history.insert(0, history_item)
     
     # 20件を超えたら古いものを削除
-    if len(st.session_state.prediction_history) > 100:
+    if len(st.session_state.prediction_history) > 20:
         st.session_state.prediction_history = st.session_state.prediction_history[:20]
-
 # データ読み込み処理
 @st.cache_data
 def load_data():
@@ -2783,6 +2781,7 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
+
 
 
 
