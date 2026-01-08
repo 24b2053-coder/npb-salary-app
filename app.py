@@ -181,9 +181,66 @@ h1:hover a, h2:hover a, h3:hover a, h4:hover a, h5:hover a, h6:hover a {
     }
     .block-container {
         max-width: 100% !important;
-        padding: 1rem !important;
+        padding: 0.5rem !important;
     }
     
+    [data-testid="stSidebar"] label[data-baseweb="radio"] {
+        font-size: 12px !important;
+    }
+    
+    /* テーブルのスクロール対応 */
+    .stDataFrame {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    
+    /* テーブルのフォントサイズ縮小 */
+    .stDataFrame table {
+        font-size: 11px !important;
+    }
+    
+    /* メトリクスの縮小 */
+    [data-testid="stMetric"] {
+        font-size: 0.85rem !important;
+    }
+    
+    [data-testid="stMetricLabel"] {
+        font-size: 0.75rem !important;
+    }
+    
+    [data-testid="stMetricValue"] {
+        font-size: 1rem !important;
+    }
+    
+    /* 見出しのサイズ調整 */
+    h1 {
+        font-size: 1.5rem !important;
+    }
+    
+    h2 {
+        font-size: 1.3rem !important;
+    }
+    
+    h3 {
+        font-size: 1.1rem !important;
+    }
+    
+    /* ボタンの調整 */
+    .stButton button {
+        font-size: 0.9rem !important;
+        padding: 0.5rem 1rem !important;
+    }
+    
+    /* セレクトボックスの調整 */
+    .stSelectbox label {
+        font-size: 0.9rem !important;
+    }
+    
+    /* 数値入力の調整 */
+    .stNumberInput label {
+        font-size: 0.85rem !important;
+    }
+}
     [data-testid="stSidebar"] label[data-baseweb="radio"] {
         font-size: 12px !important;
     }
@@ -1929,6 +1986,7 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
+
 
 
 
