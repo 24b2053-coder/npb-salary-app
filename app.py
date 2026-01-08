@@ -672,6 +672,7 @@ if data_loaded:
         - 📈 **性能**: 予測モデルの詳細情報
         - 📉 **要因分析**: 年俸に影響を与える要因の分析
         - 🏆 **精度ランキング**: 誤差が少ない選手の分析
+        - 💰 **年俸別予測**: 年俸レンジ別に特化したモデルで予測
         - 📜 **予測履歴**: 過去20件の予測履歴を表示
         
         ### ⚖️ NPB減額制限ルール
@@ -2483,4 +2484,5 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
+
 
