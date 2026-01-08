@@ -8,6 +8,7 @@ from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from datetime import datetime, timedelta
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -405,12 +406,13 @@ if 'model_trained' not in st.session_state:
 if 'prediction_history' not in st.session_state:
     st.session_state.prediction_history = []
 
-def add_to_history(player_name, predict_year, predicted_salary, actual_salary, previous_salary, 
+    def add_to_history(player_name, predict_year, predicted_salary, actual_salary, previous_salary, 
                    stats_dict, model_name, is_limited=False, limited_salary=None):
+    """予測履歴に追加（最大20件）"""
+    # インポート文を削除
+    
     # 日本時間を取得（UTC+9時間）
-    jst_time = datetime.utcnow() + timedelta(hours=9)  # ← この行を追加
-    """予測履歴に追加（最大100件）"""
-    from datetime import datetime
+    jst_time = datetime.utcnow() + timedelta(hours=9)
     
     history_item = {
         '予測日時': jst_time,
@@ -2781,6 +2783,7 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
+
 
 
 
