@@ -542,7 +542,7 @@ if data_loaded:
     
     # ホーム
     if menu == "🏠 ホーム":
-        col1, col2= st.columns()
+        col1, col2= st.columns([1,1])
         with col1:
             st.metric("採用モデル", st.session_state.best_model_name)
         with col2:
@@ -1929,6 +1929,7 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
+
 
 
 
