@@ -2592,8 +2592,9 @@ if data_loaded:
             # 実際の年俸がある場合
             actual_mask = history_df['実際の年俸'].notna()
             if actual_mask.any():
-                ax.plot(range(len(history_df))[actual_mask], 
-                       history_df.loc[actual_mask, '実際の年俸'], 
+                actual_indices = [i for i, mask in enumerate(actual_mask) if mask]
+                actual_values = history_df.loc[actual_mask, '実際の年俸'].values
+                ax.plot(actual_indices, actual_values, 
                        's', label='実際の年俸', markersize=8, color='green', alpha=0.7)
             
             ax.set_xlabel('予測順序（古→新）', fontweight='bold')
@@ -2740,7 +2741,6 @@ if data_loaded:
                 )
             else:
                 st.warning("⚠️ フィルタ条件に一致する履歴がありません")
-
 else:
     # ファイル未アップロード時
     st.info("📁 CSVファイルが見つかりませんでした")
@@ -2779,6 +2779,7 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
+
 
 
 
