@@ -427,7 +427,7 @@ def add_to_history(player_name, predict_year, predicted_salary, actual_salary, p
     st.session_state.prediction_history.insert(0, history_item)
     
     # 20件を超えたら古いものを削除
-    if len(st.session_state.prediction_history) > 20:
+    if len(st.session_state.prediction_history) > 100:
         st.session_state.prediction_history = st.session_state.prediction_history[:20]
 
 # データ読み込み処理
@@ -2451,7 +2451,7 @@ if data_loaded:
         if not st.session_state.prediction_history:
             st.info("📭 予測履歴がありません。選手予測を実行すると履歴が保存されます。")
         else:
-            st.markdown(f"**保存件数**: {len(st.session_state.prediction_history)} / 20件")
+            st.markdown(f"**保存件数**: {len(st.session_state.prediction_history)} / 100件")
             
             # 履歴をクリアするボタン
             col1, col2 = st.columns([3, 1])
@@ -2779,6 +2779,7 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
+
 
 
 
