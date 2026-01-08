@@ -407,7 +407,7 @@ if 'prediction_history' not in st.session_state:
     st.session_state.prediction_history = []
 
     def add_to_history(player_name, predict_year, predicted_salary, actual_salary, previous_salary, 
-        stats_dict, model_name, is_limited=False, limited_salary=None):
+                        stats_dict, model_name, is_limited=False, limited_salary=None):
     """予測履歴に追加（最大20件）"""
     # インポート文を削除
     
@@ -2783,6 +2783,7 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
+
 
 
 
