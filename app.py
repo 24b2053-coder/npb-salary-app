@@ -2444,7 +2444,302 @@ if data_loaded:
                     plt.close(fig)
         else:
             st.info("⬆️ まず「モデルを訓練する」ボタンを押してください")
-
+    # 予測履歴
+    elif menu == "📜 予測履歴":
+        st.header("📜 予測履歴")
+        
+        if not st.session_state.prediction_history:
+            st.info("📭 予測履歴がありません。選手予測を実行すると履歴が保存されます。")
+        else:
+            st.markdown(f"**保存件数**: {len(st.session_state.prediction_history)} / 20件")
+            
+            # 履歴をクリアするボタン
+            col1, col2 = st.columns([3, 1])
+            with col2:
+                if st.button("🗑️ 履歴をクリア", type="secondary", key="clear_history"):
+                    st.session_state.prediction_history = []
+                    st.rerun()
+            
+            st.markdown("---")
+            
+            # 履歴を表示
+            for idx, item in enumerate(st.session_state.prediction_history):
+                with st.expander(
+                    f"#{idx+1} {item['選手名']} - {item['予測年度']}年予測 ({item['予測日時']})",
+                    expanded=(idx == 0)  # 最新のものだけ展開
+                ):
+                    # 基本情報
+                    col1, col2, col3, col4 = st.columns(4)
+                    
+                    with col1:
+                        if item['前年年俸']:
+                            st.metric("前年年俸", f"{item['前年年俸']/10000:.1f}万円")
+                        else:
+                            st.metric("前年年俸", "データなし")
+                    
+                    with col2:
+                        st.metric("予測年俸", f"{item['予測年俸']/10000:.1f}万円")
+                    
+                    with col3:
+                        if item['減額制限']:
+                            st.metric("制限後年俸", f"{item['制限後年俸']/10000:.1f}万円")
+                        else:
+                            st.metric("制限後年俸", "制限なし")
+                    
+                    with col4:
+                        if item['実際の年俸']:
+                            st.metric("実際の年俸", f"{item['実際の年俸']/10000:.1f}万円")
+                            error = abs(item['制限後年俸'] - item['実際の年俸']) / item['実際の年俸'] * 100
+                            st.metric("誤差率", f"{error:.1f}%")
+                        else:
+                            st.metric("実際の年俸", "データなし")
+                    
+                    # 減額制限の表示
+                    if item['減額制限']:
+                        st.warning(f"⚖️ 減額制限が適用されました")
+                    
+                    # 使用モデル
+                    st.markdown(f"**使用モデル**: {item['モデル']}")
+                    
+                    # 成績サマリー
+                    st.markdown("---")
+                    st.markdown("**成績サマリー**")
+                    
+                    stats = item['成績']
+                    col1, col2, col3, col4, col5 = st.columns(5)
+                    
+                    with col1:
+                        st.metric("試合", stats['試合'])
+                    with col2:
+                        st.metric("安打", stats['安打'])
+                    with col3:
+                        st.metric("本塁打", stats['本塁打'])
+                    with col4:
+                        st.metric("打点", stats['打点'])
+                    with col5:
+                        st.metric("年齢", f"{stats['年齢']}歳")
+                    
+                    col1, col2, col3, col4 = st.columns(4)
+                    
+                    with col1:
+                        st.metric("打率", f"{stats['打率']:.3f}")
+                    with col2:
+                        st.metric("出塁率", f"{stats['出塁率']:.3f}")
+                    with col3:
+                        st.metric("長打率", f"{stats['長打率']:.3f}")
+                    with col4:
+                        st.metric("タイトル", stats['タイトル数'])
+            
+            # 履歴の統計情報
+            st.markdown("---")
+            st.subheader("📊 履歴統計")
+            
+            # 予測回数が多い選手トップ5
+            from collections import Counter
+            player_counts = Counter([item['選手名'] for item in st.session_state.prediction_history])
+            
+            if player_counts:
+                st.markdown("**予測回数が多い選手 Top 5**")
+                top_players = player_counts.most_common(5)
+                
+                for rank, (player, count) in enumerate(top_players, 1):
+                    st.write(f"{rank}. {player}: {count}回")
+            
+            # 平均予測年俸
+            avg_predicted = sum([item['予測年俸'] for item in st.session_state.prediction_history]) / len(st.session_state.prediction_history)
+            
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric("平均予測年俸", f"{avg_predicted/10000:.1f}万円")
+            with col2:
+                limited_count = sum([1 for item in st.session_state.prediction_history if item['減額制限']])
+                st.metric("減額制限適用", f"{limited_count}件")
+            with col3:
+                # 誤差率を計算できるものの平均
+                errors = []
+                for item in st.session_state.prediction_history:
+                    if item['実際の年俸']:
+                        error = abs(item['制限後年俸'] - item['実際の年俸']) / item['実際の年俸'] * 100
+                        errors.append(error)
+                
+                if errors:
+                    avg_error = sum(errors) / len(errors)
+                    st.metric("平均誤差率", f"{avg_error:.1f}%")
+                else:
+                    st.metric("平均誤差率", "計算不可")
+            
+            # 履歴の推移グラフ
+            st.markdown("---")
+            st.subheader("📈 履歴の推移")
+            
+            # 予測年俸の推移グラフ
+            history_df = pd.DataFrame([
+                {
+                    '日時': item['予測日時'],
+                    '選手名': item['選手名'],
+                    '予測年俸': item['予測年俸'] / 10000,
+                    '実際の年俸': item['実際の年俸'] / 10000 if item['実際の年俸'] else None
+                }
+                for item in reversed(st.session_state.prediction_history)
+            ])
+            
+            fig, ax = plt.subplots(figsize=(12, 6))
+            
+            # 予測年俸の推移
+            ax.plot(range(len(history_df)), history_df['予測年俸'], 
+                   'o-', label='予測年俸', linewidth=2, markersize=6)
+            
+            # 実際の年俸がある場合
+            actual_mask = history_df['実際の年俸'].notna()
+            if actual_mask.any():
+                ax.plot(range(len(history_df))[actual_mask], 
+                       history_df.loc[actual_mask, '実際の年俸'], 
+                       's', label='実際の年俸', markersize=8, color='green', alpha=0.7)
+            
+            ax.set_xlabel('予測順序（古→新）', fontweight='bold')
+            ax.set_ylabel('年俸（万円）', fontweight='bold')
+            ax.set_title('予測年俸の推移', fontweight='bold')
+            ax.legend()
+            ax.grid(alpha=0.3)
+            
+            # X軸のラベルを選手名に（スペースの都合で一部のみ）
+            step = max(1, len(history_df) // 10)
+            ax.set_xticks(range(0, len(history_df), step))
+            ax.set_xticklabels([history_df.iloc[i]['選手名'][:4] for i in range(0, len(history_df), step)], 
+                              rotation=45, ha='right')
+            
+            st.pyplot(fig)
+            plt.close(fig)
+            
+            # 誤差率の分布（実際の年俸がある場合のみ）
+            if errors:
+                st.markdown("---")
+                st.subheader("📊 誤差率の分布")
+                
+                fig2, ax2 = plt.subplots(figsize=(10, 6))
+                
+                ax2.hist(errors, bins=min(len(errors), 15), alpha=0.7, 
+                        color='steelblue', edgecolor='black')
+                ax2.axvline(np.mean(errors), color='red', linestyle='--', 
+                           linewidth=2, label=f'平均: {np.mean(errors):.1f}%')
+                ax2.axvline(np.median(errors), color='green', linestyle='--', 
+                           linewidth=2, label=f'中央値: {np.median(errors):.1f}%')
+                
+                ax2.set_xlabel('誤差率 (%)', fontweight='bold')
+                ax2.set_ylabel('件数', fontweight='bold')
+                ax2.set_title('予測誤差率の分布', fontweight='bold')
+                ax2.legend()
+                ax2.grid(alpha=0.3)
+                
+                st.pyplot(fig2)
+                plt.close(fig2)
+            
+            # 履歴データのエクスポート機能
+            st.markdown("---")
+            st.subheader("💾 データエクスポート")
+            
+            # DataFrameに変換
+            export_data = []
+            for item in st.session_state.prediction_history:
+                export_data.append({
+                    '予測日時': item['予測日時'],
+                    '選手名': item['選手名'],
+                    '予測年度': item['予測年度'],
+                    '予測年俸(万円)': round(item['予測年俸']/10000, 1),
+                    '制限後年俸(万円)': round(item['制限後年俸']/10000, 1) if item['制限後年俸'] else None,
+                    '実際の年俸(万円)': round(item['実際の年俸']/10000, 1) if item['実際の年俸'] else None,
+                    '前年年俸(万円)': round(item['前年年俸']/10000, 1) if item['前年年俸'] else None,
+                    '減額制限': '有' if item['減額制限'] else '無',
+                    'モデル': item['モデル'],
+                    '試合': item['成績']['試合'],
+                    '本塁打': item['成績']['本塁打'],
+                    '打点': item['成績']['打点'],
+                    '打率': item['成績']['打率'],
+                    '出塁率': item['成績']['出塁率'],
+                    '長打率': item['成績']['長打率'],
+                    '年齢': item['成績']['年齢'],
+                    'タイトル数': item['成績']['タイトル数']
+                })
+            
+            df_export = pd.DataFrame(export_data)
+            
+            # プレビュー表示
+            st.markdown("**エクスポートデータプレビュー（最新5件）**")
+            st.dataframe(
+                df_export.head(5),
+                use_container_width=True,
+                hide_index=True
+            )
+            
+            # CSVダウンロード
+            csv = df_export.to_csv(index=False, encoding='utf-8-sig')
+            st.download_button(
+                label="📥 CSVでダウンロード",
+                data=csv,
+                file_name=f"prediction_history_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                mime="text/csv",
+                key="download_history_csv"
+            )
+            
+            # フィルタリング機能
+            st.markdown("---")
+            st.subheader("🔍 履歴フィルタリング")
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                # 選手名でフィルタ
+                unique_players = sorted(list(set([item['選手名'] for item in st.session_state.prediction_history])))
+                selected_filter_player = st.selectbox(
+                    "選手名で絞り込み",
+                    options=["すべて"] + unique_players,
+                    key="filter_player"
+                )
+            
+            with col2:
+                # 減額制限でフィルタ
+                filter_limited = st.selectbox(
+                    "減額制限で絞り込み",
+                    options=["すべて", "制限あり", "制限なし"],
+                    key="filter_limited"
+                )
+            
+            # フィルタリング実行
+            filtered_history = st.session_state.prediction_history.copy()
+            
+            if selected_filter_player != "すべて":
+                filtered_history = [item for item in filtered_history if item['選手名'] == selected_filter_player]
+            
+            if filter_limited == "制限あり":
+                filtered_history = [item for item in filtered_history if item['減額制限']]
+            elif filter_limited == "制限なし":
+                filtered_history = [item for item in filtered_history if not item['減額制限']]
+            
+            if filtered_history:
+                st.success(f"✅ {len(filtered_history)}件の履歴が見つかりました")
+                
+                # フィルタ結果を表示
+                filter_export_data = []
+                for item in filtered_history:
+                    filter_export_data.append({
+                        '予測日時': item['予測日時'],
+                        '選手名': item['選手名'],
+                        '予測年度': item['予測年度'],
+                        '予測年俸(万円)': f"{item['予測年俸']/10000:.1f}",
+                        '制限後年俸(万円)': f"{item['制限後年俸']/10000:.1f}" if item['制限後年俸'] else "N/A",
+                        '実際の年俸(万円)': f"{item['実際の年俸']/10000:.1f}" if item['実際の年俸'] else "N/A",
+                        '減額制限': '有' if item['減額制限'] else '無',
+                        'モデル': item['モデル']
+                    })
+                
+                df_filtered = pd.DataFrame(filter_export_data)
+                st.dataframe(
+                    df_filtered,
+                    use_container_width=True,
+                    hide_index=True
+                )
+            else:
+                st.warning("⚠️ フィルタ条件に一致する履歴がありません")
 
 else:
     # ファイル未アップロード時
@@ -2484,5 +2779,6 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 # Streamlitアプリを再起動するか、以下のコマンドを実行
 st.cache_data.clear()
 st.cache_resource.clear()
+
 
 
