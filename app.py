@@ -1,3 +1,6 @@
+bash
+
+cat > /home/claude/app_new.py << 'PYEOF'
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -162,22 +165,17 @@ if 'prediction_history' not in st.session_state:
     st.session_state.prediction_history = []
 
 # ============================================================
-# データ読み込み
+# データ読み込み（salary_all.csv 1本）
 # ============================================================
 @st.cache_data
 def load_data():
     try:
-        # 年俸: 年度別3ファイル
-        sal23 = pd.read_csv('data/besmoney_salary_2023.csv')
-        sal24 = pd.read_csv('data/besmoney_salary_2024.csv')
-        sal25 = pd.read_csv('data/besmoney_salary_2025.csv')
-        salary_df = (sal23, sal24, sal25)
-
-        stats_2023  = pd.read_csv('data/stats_2023.csv')
-        stats_2024  = pd.read_csv('data/stats_2024.csv')
-        stats_2025  = pd.read_csv('data/stats_2025.csv')
-        titles_df   = pd.read_csv('data/titles_2023&2024&2025.csv')
-        pitcher_df  = pd.read_csv('data/npb_pitcher_stats.csv')
+        salary_df  = pd.read_csv('data/salary_all.csv')
+        stats_2023 = pd.read_csv('data/stats_2023.csv')
+        stats_2024 = pd.read_csv('data/stats_2024.csv')
+        stats_2025 = pd.read_csv('data/stats_2025.csv')
+        titles_df  = pd.read_csv('data/titles_2023&2024&2025.csv')
+        pitcher_df = pd.read_csv('data/npb_pitcher_stats.csv')
         return salary_df, stats_2023, stats_2024, stats_2025, titles_df, pitcher_df, True
     except FileNotFoundError:
         return None, None, None, None, None, None, False
@@ -188,8 +186,8 @@ salary_df, stats_2023, stats_2024, stats_2025, titles_df, pitcher_df_raw, data_l
 # ファイルアップロード処理（dataフォルダがない場合）
 # ============================================================
 if not data_loaded:
-    st.sidebar.markdown("**CSVファイルを選択してアップロード（8つ全て）：**")
-    st.sidebar.caption("besmoney_salary_2023/2024/2025.csv, stats_2023/2024/2025.csv, titles.csv, npb_pitcher_stats.csv")
+    st.sidebar.markdown("**CSVファイルをアップロード（6つ全て）：**")
+    st.sidebar.caption("salary_all.csv, stats_2023/2024/2025.csv, titles_2023&2024&2025.csv, npb_pitcher_stats.csv")
     uploaded_files = st.sidebar.file_uploader(
         "CSVファイルを選択",
         type=['csv'],
@@ -200,14 +198,8 @@ if not data_loaded:
         file_dict = {}
         for file in uploaded_files:
             name = file.name.lower()
-            # 年俸ファイル（besmoney or salary）
-            if ('besmoney' in name or 'salary' in name) and '2023' in name:
-                file_dict['salary_2023'] = file
-            elif ('besmoney' in name or 'salary' in name) and '2024' in name:
-                file_dict['salary_2024'] = file
-            elif ('besmoney' in name or 'salary' in name) and '2025' in name:
-                file_dict['salary_2025'] = file
-            # その他
+            if 'salary_all' in name:
+                file_dict['salary_all'] = file
             elif 'titles' in name or 'タイトル' in name:
                 file_dict['titles'] = file
             elif 'pitcher' in name or '投手' in name:
@@ -219,18 +211,15 @@ if not data_loaded:
             elif '2025' in name:
                 file_dict['stats_2025'] = file
 
-        required = ['salary_2023', 'salary_2024', 'salary_2025', 'titles', 'stats_2023', 'stats_2024', 'stats_2025']
+        required = ['salary_all', 'titles', 'stats_2023', 'stats_2024', 'stats_2025']
         missing = [k for k in required if k not in file_dict]
 
         if not missing:
-            sal23 = pd.read_csv(file_dict['salary_2023'])
-            sal24 = pd.read_csv(file_dict['salary_2024'])
-            sal25 = pd.read_csv(file_dict['salary_2025'])
-            salary_df = (sal23, sal24, sal25)
-            stats_2023  = pd.read_csv(file_dict['stats_2023'])
-            stats_2024  = pd.read_csv(file_dict['stats_2024'])
-            stats_2025  = pd.read_csv(file_dict['stats_2025'])
-            titles_df   = pd.read_csv(file_dict['titles'])
+            salary_df  = pd.read_csv(file_dict['salary_all'])
+            stats_2023 = pd.read_csv(file_dict['stats_2023'])
+            stats_2024 = pd.read_csv(file_dict['stats_2024'])
+            stats_2025 = pd.read_csv(file_dict['stats_2025'])
+            titles_df  = pd.read_csv(file_dict['titles'])
             pitcher_df_raw = pd.read_csv(file_dict['pitcher']) if 'pitcher' in file_dict else None
             data_loaded = True
             st.sidebar.success(f"✅ {len(uploaded_files)}ファイル読み込み完了")
@@ -242,18 +231,13 @@ if not data_loaded:
 # ============================================================
 @st.cache_data
 def prepare_salary_long(_salary_df):
-    """年俸データをlong形式に変換（年度別3ファイル対応）"""
-    sal23, sal24, sal25 = _salary_df
-    sal23 = sal23[['選手名', '年俸_円']].copy(); sal23['年度'] = 2023
-    sal24 = sal24[['選手名', '年俸_円']].copy(); sal24['年度'] = 2024
-    sal25 = sal25[['選手名', '年俸_円']].copy(); sal25['年度'] = 2025
-
-    salary_long = pd.concat([sal23, sal24, sal25], ignore_index=True)
-    salary_long = salary_long.dropna(subset=['年俸_円'])
-    salary_long = salary_long[salary_long['年俸_円'] > 0]
-    salary_long = salary_long.sort_values('年俸_円', ascending=False)
-    salary_long = salary_long.drop_duplicates(subset=['選手名', '年度'], keep='first')
-    return salary_long
+    """salary_all.csv（年度列あり）をそのままlong形式として使う"""
+    df = _salary_df.copy()
+    df = df[['選手名', '年俸_円', '年度']].dropna(subset=['年俸_円'])
+    df = df[df['年俸_円'] > 0]
+    df = df.sort_values('年俸_円', ascending=False)
+    df = df.drop_duplicates(subset=['選手名', '年度'], keep='first')
+    return df
 
 
 @st.cache_data
@@ -1510,9 +1494,7 @@ else:
     **方法1: dataフォルダに配置**
     ```
     data/
-    ├── besmoney_salary_2023.csv
-    ├── besmoney_salary_2024.csv
-    ├── besmoney_salary_2025.csv
+    ├── salary_all.csv
     ├── stats_2023.csv
     ├── stats_2024.csv
     ├── stats_2025.csv
@@ -1520,8 +1502,8 @@ else:
     └── npb_pitcher_stats.csv
     ```
 
-    **方法2: 左サイドバーから手動アップロード（8ファイル）**
-    - besmoney_salary_2023/2024/2025.csv（年俸）
+    **方法2: 左サイドバーから手動アップロード（6ファイル）**
+    - salary_all.csv（年俸）
     - stats_2023/2024/2025.csv（野手成績）
     - titles_2023&2024&2025.csv（タイトル）
     - npb_pitcher_stats.csv（投手成績）
@@ -1532,3 +1514,5 @@ st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powere
 
 st.cache_data.clear()
 st.cache_resource.clear()
+PYEOF
+echo "完了: $(wc -l < /home/claude/app_new.py)行"
