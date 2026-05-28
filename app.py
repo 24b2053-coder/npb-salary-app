@@ -454,23 +454,31 @@ def train_pitcher_models(_merged_df):
     best_model = results[best_name]['model']
     return best_model, best_name, scaler, feature_cols, results, ml_df
 
-
 def predict_salary(player_stats_row, feature_cols, best_model, best_model_name, scaler):
     """特徴量ベクトルを作成して年俸を予測（対数逆変換後・10万円単位）"""
-    if '年齢' in feature_cols and '年齢' not in player_stats_row.index:
-        feats = player_stats_row[feature_cols[:-1]].values.tolist() + [28]
-        features = np.array([feats])
-    else:
-        features = player_stats_row[feature_cols].values.reshape(1, -1)
+    # 1行の辞書データを作成
+    feat_dict = {}
+    for col in feature_cols:
+        if col == '年齢' and col not in player_stats_row.index:
+            feat_dict[col] = 28  # 年齢データがない場合のデフォルト値
+        else:
+            feat_dict[col] = player_stats_row[col]
+            
+    # モデルが受け取れるように、正しい列名を持った2次元のDataFrameに変換
+    features_df = pd.DataFrame([feat_dict], columns=feature_cols)
 
+    # 予測を実行
     if best_model_name == '線形回帰':
-        pred_log = best_model.predict(scaler.transform(features))[0]
+        # 線形回帰の場合は標準化(scaler)を適用
+        features_scaled = scaler.transform(features_df)
+        pred_log = best_model.predict(features_scaled)[0]
     else:
-        pred_log = best_model.predict(features)[0]
+        # ランダムフォレスト、勾配ブースティングはそのまま投入
+        pred_log = best_model.predict(features_df)[0]
 
+    # 対数逆変換と10万円単位への丸め
     salary = round(np.expm1(pred_log) / 100_000) * 100_000
     return salary
-
 
 # ============================================================
 # アプリ本体
