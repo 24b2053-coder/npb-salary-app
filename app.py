@@ -333,8 +333,12 @@ def prepare_pitcher_data(_pitcher_df_raw, _salary_df, _titles_df):
     merged.drop(columns=['年度_年俸', '予測年度'], inplace=True)
     merged.rename(columns={'年度_成績': '成績年度'}, inplace=True)
 
-    # 2023〜2025年データのみ（stats as of 2023/2024/2025 → predict 2024/2025/2026）
+    # stats_all_with_titles: 選手予測画面で参照するデータ
+    # df はタイトル数・投球回_実数・防御率・勝率が付与済みなのでそのまま使う
     stats_all_with_titles = df.copy()
+    # 年齢列がなければデフォルト28を補完
+    if '年齢' not in stats_all_with_titles.columns:
+        stats_all_with_titles['年齢'] = 28
 
     return merged, stats_all_with_titles, salary_long
 
@@ -454,31 +458,29 @@ def train_pitcher_models(_merged_df):
     best_model = results[best_name]['model']
     return best_model, best_name, scaler, feature_cols, results, ml_df
 
+
 def predict_salary(player_stats_row, feature_cols, best_model, best_model_name, scaler):
-    """特徴量ベクトルを作成して年俸を予測（対数逆変換後・10万円単位）"""
-    # 1行の辞書データを作成
-    feat_dict = {}
+    """特徴量ベクトルを作成して年俸を予測（対数逆変換後・10万円単位）
+    列が存在しない・NaNの場合はデフォルト値（年齢=28, その他=0）で補完する。
+    """
+    feat_values = []
     for col in feature_cols:
-        if col == '年齢' and col not in player_stats_row.index:
-            feat_dict[col] = 28  # 年齢データがない場合のデフォルト値
+        if col in player_stats_row.index:
+            val = player_stats_row[col]
+            feat_values.append(float(val) if pd.notna(val) else 0.0)
         else:
-            feat_dict[col] = player_stats_row[col]
-            
-    # モデルが受け取れるように、正しい列名を持った2次元のDataFrameに変換
-    features_df = pd.DataFrame([feat_dict], columns=feature_cols)
+            feat_values.append(28.0 if col == '年齢' else 0.0)
 
-    # 予測を実行
+    features = np.array([feat_values])
+
     if best_model_name == '線形回帰':
-        # 線形回帰の場合は標準化(scaler)を適用
-        features_scaled = scaler.transform(features_df)
-        pred_log = best_model.predict(features_scaled)[0]
+        pred_log = best_model.predict(scaler.transform(features))[0]
     else:
-        # ランダムフォレスト、勾配ブースティングはそのまま投入
-        pred_log = best_model.predict(features_df)[0]
+        pred_log = best_model.predict(features)[0]
 
-    # 対数逆変換と10万円単位への丸め
     salary = round(np.expm1(pred_log) / 100_000) * 100_000
     return salary
+
 
 # ============================================================
 # アプリ本体
