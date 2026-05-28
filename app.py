@@ -422,7 +422,7 @@ def train_pitcher_models(_merged_df):
 
     ml_df = ml_df[feature_cols + ['年俸_円', '選手名', '成績年度']].dropna()
 
-    if len(ml_df) < 20:
+    if len(ml_df) < 10:
         return None, None, None, feature_cols, {}, ml_df
 
     X = ml_df[feature_cols]
@@ -460,9 +460,10 @@ def train_pitcher_models(_merged_df):
 
 
 def predict_salary(player_stats_row, feature_cols, best_model, best_model_name, scaler):
-    """特徴量ベクトルを作成して年俸を予測（対数逆変換後・10万円単位）
-    列が存在しない・NaNの場合はデフォルト値（年齢=28, その他=0）で補完する。
-    """
+    # モデルがNoneの場合はNoneを返す
+    if best_model is None:
+        return None
+
     feat_values = []
     for col in feature_cols:
         if col in player_stats_row.index:
@@ -474,6 +475,8 @@ def predict_salary(player_stats_row, feature_cols, best_model, best_model_name, 
     features = np.array([feat_values])
 
     if best_model_name == '線形回帰':
+        if scaler is None:
+            return None
         pred_log = best_model.predict(scaler.transform(features))[0]
     else:
         pred_log = best_model.predict(features)[0]
@@ -611,8 +614,12 @@ if data_loaded:
         predict_year = st.slider("予測年度", 2024, 2026, 2025, key="pred_year")
 
         if st.button("🎯 予測実行", type="primary"):
-            stats_year = predict_year - 1
+            # 投手モデルが未訓練の場合はエラー表示
+            if player_type == "投手" and st.session_state.p_model is None:
+                st.error("❌ 投手モデルの訓練に失敗しました。投手データ（npb_pitcher_stats.csv）のサンプル数が不足している可能性があります。")
+                st.stop()
 
+            stats_year = predict_year - 1
             if player_type == "野手":
                 df_stats = st.session_state.batter_stats_all
                 model      = st.session_state.b_model
@@ -633,6 +640,10 @@ if data_loaded:
                 row = row.iloc[0]
                 predicted = predict_salary(row, fcols, model, model_name, scaler)
 
+                if predicted is None:
+                    st.error("❌ 予測に失敗しました。モデルが正常に訓練されていません。")
+                    st.stop()
+                    
                 prev_data = st.session_state.salary_long[
                     (st.session_state.salary_long['選手名'] == selected) &
                     (st.session_state.salary_long['年度'] == stats_year)
