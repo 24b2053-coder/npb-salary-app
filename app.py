@@ -27,54 +27,14 @@ st.markdown("---")
 # ════════════════════════════════════════════════════════════
 @st.cache_data
 def load_data():
-    salary_df  = pd.read_csv('data/salary_2023&2024&2025.csv')
-    s23        = pd.read_csv('data/stats_2023.csv')
-    s24        = pd.read_csv('data/stats_2024.csv')
-    s25        = pd.read_csv('data/stats_2025.csv')
-    titles_df  = pd.read_csv('data/titles_2023&2024&2025.csv')
-
-    # カラム名正規化（BOM除去）
+    salary_df = pd.read_csv('data/salary_2023&2024&2025.csv')
+    s23       = pd.read_csv('data/stats_2023.csv')
+    s24       = pd.read_csv('data/stats_2024.csv')
+    s25       = pd.read_csv('data/stats_2025.csv')
+    titles_df = pd.read_csv('data/titles_2023&2024&2025.csv')
     for df in [salary_df, s23, s24, s25, titles_df]:
         df.columns = [c.lstrip('\ufeff').strip() for c in df.columns]
-
-    # タイトル集計
-    titles_df = titles_df.dropna(subset=['選手名'])
-    title_summary = (titles_df.groupby(['選手名', '年度'])
-                               .size().reset_index(name='タイトル数'))
-
-    # 成績統合
-    s23['年度'], s24['年度'], s25['年度'] = 2023, 2024, 2025
-    stats_all = pd.concat([s23, s24, s25], ignore_index=True)
-
-    # 年俸縦持ち変換
-    frames = []
-    for col, yr in [('年俸_円_2023', 2023), ('年俸_円_2024', 2024), ('年俸_円_2025', 2025)]:
-        if col in salary_df.columns:
-            d = salary_df[['選手名', col]].copy()
-            d.columns = ['選手名', '年俸_円']
-            d['年度'] = yr
-            frames.append(d)
-    salary_long = pd.concat(frames, ignore_index=True)
-    salary_long = salary_long.dropna(subset=['年俸_円'])
-    salary_long = salary_long[salary_long['年俸_円'] > 0]
-    salary_long = (salary_long.sort_values('年俸_円', ascending=False)
-                               .drop_duplicates(subset=['選手名', '年度'], keep='first'))
-
-    # 結合
-    stats_all['予測年度'] = stats_all['年度'] + 1
-    merged = pd.merge(stats_all, title_summary, on=['選手名', '年度'], how='left')
-    merged['タイトル数'] = merged['タイトル数'].fillna(0)
-    merged = pd.merge(merged, salary_long,
-                      left_on=['選手名', '予測年度'],
-                      right_on=['選手名', '年度'],
-                      suffixes=('_成績', '_年俸'))
-    merged = merged.drop(columns=['年度_年俸', '予測年度'])
-    merged.rename(columns={'年度_成績': '成績年度'}, inplace=True)
-
-    stats_wt = pd.merge(stats_all, title_summary, on=['選手名', '年度'], how='left')
-    stats_wt['タイトル数'] = stats_wt['タイトル数'].fillna(0)
-
-    return merged, stats_wt, salary_long
+    return _process(salary_df, s23, s24, s25, titles_df)
 
 # ════════════════════════════════════════════════════════════
 # モデル訓練
@@ -115,13 +75,75 @@ def train_models(merged):
 # ════════════════════════════════════════════════════════════
 # データ読み込み実行
 # ════════════════════════════════════════════════════════════
+@st.cache_data
+def load_data_from_uploads(sal, s23, s24, s25, ttl):
+    """アップロードされたファイルからデータを読み込む"""
+    salary_df = pd.read_csv(sal)
+    s23_df    = pd.read_csv(s23)
+    s24_df    = pd.read_csv(s24)
+    s25_df    = pd.read_csv(s25)
+    titles_df = pd.read_csv(ttl)
+    for df in [salary_df, s23_df, s24_df, s25_df, titles_df]:
+        df.columns = [c.lstrip('\ufeff').strip() for c in df.columns]
+    return _process(salary_df, s23_df, s24_df, s25_df, titles_df)
+
+def _process(salary_df, s23, s24, s25, titles_df):
+    """前処理の共通処理"""
+    titles_df = titles_df.dropna(subset=['選手名'])
+    title_summary = (titles_df.groupby(['選手名','年度'])
+                               .size().reset_index(name='タイトル数'))
+    s23['年度'], s24['年度'], s25['年度'] = 2023, 2024, 2025
+    stats_all = pd.concat([s23, s24, s25], ignore_index=True)
+
+    frames = []
+    for col, yr in [('年俸_円_2023',2023),('年俸_円_2024',2024),('年俸_円_2025',2025)]:
+        if col in salary_df.columns:
+            d = salary_df[['選手名', col]].copy()
+            d.columns = ['選手名','年俸_円']; d['年度'] = yr
+            frames.append(d)
+    salary_long = pd.concat(frames, ignore_index=True)
+    salary_long = salary_long.dropna(subset=['年俸_円'])
+    salary_long = salary_long[salary_long['年俸_円'] > 0]
+    salary_long = (salary_long.sort_values('年俸_円', ascending=False)
+                               .drop_duplicates(subset=['選手名','年度'], keep='first'))
+
+    stats_all['予測年度'] = stats_all['年度'] + 1
+    merged = pd.merge(stats_all, title_summary, on=['選手名','年度'], how='left')
+    merged['タイトル数'] = merged['タイトル数'].fillna(0)
+    merged = pd.merge(merged, salary_long,
+                      left_on=['選手名','予測年度'],
+                      right_on=['選手名','年度'],
+                      suffixes=('_成績','_年俸'))
+    merged = merged.drop(columns=['年度_年俸','予測年度'])
+    merged.rename(columns={'年度_成績':'成績年度'}, inplace=True)
+
+    stats_wt = pd.merge(stats_all, title_summary, on=['選手名','年度'], how='left')
+    stats_wt['タイトル数'] = stats_wt['タイトル数'].fillna(0)
+    return merged, stats_wt, salary_long
+
+# ── データ読み込み：data/ フォルダ → なければアップロード ──
+data_ready = False
 try:
     merged, stats_wt, salary_long = load_data()
-    results, best_name, best_model, scaler, ml_df = train_models(merged)
-except FileNotFoundError as e:
-    st.error(f"❌ データファイルが見つかりません: {e}")
-    st.info("リポジトリの `data/` フォルダに5つのCSVを配置してください。")
-    st.stop()
+    data_ready = True
+except FileNotFoundError:
+    st.sidebar.markdown("### 📁 CSVファイルをアップロード")
+    st.sidebar.caption("data/ フォルダが見つからないため手動アップロードが必要です")
+    sal = st.sidebar.file_uploader("salary_2023&2024&2025.csv", type="csv", key="sal")
+    s23 = st.sidebar.file_uploader("stats_2023.csv",            type="csv", key="s23")
+    s24 = st.sidebar.file_uploader("stats_2024.csv",            type="csv", key="s24")
+    s25 = st.sidebar.file_uploader("stats_2025.csv",            type="csv", key="s25")
+    ttl = st.sidebar.file_uploader("titles_2023&2024&2025.csv", type="csv", key="ttl")
+
+    if all([sal, s23, s24, s25, ttl]):
+        merged, stats_wt, salary_long = load_data_from_uploads(sal, s23, s24, s25, ttl)
+        data_ready = True
+    else:
+        uploaded = sum(1 for f in [sal,s23,s24,s25,ttl] if f)
+        st.info(f"📁 {uploaded}/5 ファイルがアップロードされています。5つ全てアップロードしてください。")
+        st.stop()
+
+results, best_name, best_model, scaler, ml_df = train_models(merged)
 
 # ════════════════════════════════════════════════════════════
 # 予測ヘルパー
