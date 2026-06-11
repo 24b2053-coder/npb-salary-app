@@ -1516,7 +1516,7 @@ else:
     ├── stats_2024.csv
     ├── stats_2025.csv
     ├── titles_2023&2024&2025.csv
-    └── npb_pitcher_stats.csv   ← 投手データ（新規追加）
+    └── npb_pitcher_stats.csv   ← 投手データ
     ```
 
     **方法2: 左サイドバーから手動アップロード（6ファイル）**
