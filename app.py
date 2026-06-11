@@ -1,6 +1,3 @@
-bash
-
-cat > /home/claude/app_new.py << 'PYEOF'
 import streamlit as st
 import pandas as pd
 import numpy as np
