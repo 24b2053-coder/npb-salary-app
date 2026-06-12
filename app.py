@@ -184,11 +184,14 @@ section[data-testid="stMain"] {
 /* divider */
 [data-testid="stVerticalBlock"] { gap: 0.5rem; }
 
-@media (max-width: 768px) {
-    .block-container { padding: 1rem !important; }
-}
 [data-testid="collapsedControl"] { display: none !important; }
 [data-testid="stSidebarCollapseButton"] { display: none !important; }
+@media (max-width: 768px) {
+    [data-testid="collapsedControl"] { display: block !important; }
+    [data-testid="stSidebarCollapseButton"] { display: block !important; }
+    .block-container { max-width: 100% !important; padding: 0.5rem !important; }
+}
+[data-testid="collapsedControl"] svg { color: white !important; fill: white !important; }
 </style>
 """, unsafe_allow_html=True)
 
