@@ -21,51 +21,199 @@ st.set_page_config(
 
 st.markdown("""
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Oswald:wght@600&display=swap');
+
+:root {
+    --navy:   #0d1b2a;
+    --navy2:  #1b2f45;
+    --gold:   #f0a500;
+    --gold2:  #ffd166;
+    --pink:   #ff6b9d;
+    --light:  #f5f7fa;
+    --white:  #ffffff;
+    --gray:   #8899aa;
+    --green:  #06d6a0;
+    --red:    #ef476f;
+}
+
+html, body, [data-testid="stAppViewContainer"] {
+    background: var(--navy) !important;
+    color: var(--light) !important;
+}
+
+[data-testid="stMain"] {
+    background: var(--navy) !important;
+}
+
+.block-container {
+    max-width: 900px !important;
+    padding: 1.5rem 2rem 3rem 2rem !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+/* ヘッダー */
+h1 { 
+    font-family: 'Oswald', sans-serif !important;
+    font-size: 2.2rem !important;
+    color: var(--gold) !important;
+    letter-spacing: 2px !important;
+    text-transform: uppercase !important;
+}
+h2, h3 { color: var(--gold2) !important; }
+h1 a, h2 a, h3 a, h4 a { display: none !important; }
+[data-testid="stHeaderActionElements"] { display: none !important; }
+
+/* hr */
+hr { border-color: var(--navy2) !important; }
+
+/* メトリクス */
+[data-testid="stMetric"] {
+    background: var(--navy2) !important;
+    border: 1px solid rgba(240,165,0,0.2) !important;
+    border-radius: 12px !important;
+    padding: 1rem !important;
+}
+[data-testid="stMetricLabel"] { color: var(--gray) !important; font-size: 0.75rem !important; }
+[data-testid="stMetricValue"] { color: var(--gold) !important; font-weight: 700 !important; }
+
+/* ボタン */
+[data-testid="stButton"] button[kind="primary"] {
+    background: linear-gradient(135deg, var(--gold), var(--pink)) !important;
+    color: var(--navy) !important;
+    font-weight: 700 !important;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 0.6rem 1.8rem !important;
+    font-size: 0.95rem !important;
+    transition: transform 0.15s, box-shadow 0.15s !important;
+}
+[data-testid="stButton"] button[kind="primary"]:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(240,165,0,0.4) !important;
+}
+[data-testid="stButton"] button[kind="secondary"] {
+    background: transparent !important;
+    color: var(--gray) !important;
+    border: 1px solid var(--navy2) !important;
+    border-radius: 8px !important;
+}
+
+/* 入力 */
+[data-testid="stTextInput"] input,
+[data-testid="stSelectbox"] div,
+[data-testid="stNumberInput"] input {
+    background: var(--navy2) !important;
+    color: var(--light) !important;
+    border-color: rgba(240,165,0,0.2) !important;
+    border-radius: 8px !important;
+}
+[data-testid="stSlider"] [data-testid="stThumbValue"] { color: var(--gold) !important; }
+
+/* success / warning / error */
+[data-testid="stAlert"] {
+    border-radius: 10px !important;
+    border-left-width: 4px !important;
+}
+
+/* データフレーム */
+[data-testid="stDataFrame"] {
+    border-radius: 10px !important;
+    overflow: hidden !important;
+    animation: none !important;
+    transition: none !important;
+}
+.stDataFrame { animation: none !important; transition: none !important; }
+
+/* expander */
+[data-testid="stExpander"] {
+    background: var(--navy2) !important;
+    border: 1px solid rgba(240,165,0,0.15) !important;
+    border-radius: 10px !important;
+}
+
+/* spinner */
+[data-testid="stSpinner"] { color: var(--gold) !important; }
+
+/* radio */
+[data-testid="stRadio"] label { color: var(--light) !important; }
+
+/* multiselect */
+[data-testid="stMultiSelect"] { background: var(--navy2) !important; }
+
+/* サイドバー */
 [data-testid="stSidebar"] {
-    position: fixed !important;
-    top: 0; left: 0;
-    width: 280px !important;
-    height: 100vh !important;
-    background-color: #ffe4e9 !important;
-    border-right: 1px solid #e0e0e0;
-    padding: 0 !important; margin: 0 !important;
-    z-index: 1000000;
-    overflow: hidden;
-    border-radius: 0px 30px 30px 0;
-    transition: transform 0.3s ease !important;
+    background: linear-gradient(180deg, #0d1b2a 0%, #1a2f45 100%) !important;
+    border-right: 1px solid rgba(240,165,0,0.15) !important;
+    box-shadow: 4px 0 24px rgba(0,0,0,0.4) !important;
 }
-[data-testid="stSidebar"].sidebar-open {
-    transform: translateX(0);
-}
-[data-testid="stSidebarUserContent"] { padding-top: 3rem !important; margin-top: 0 !important; }
+[data-testid="stSidebarUserContent"] { padding-top: 1rem !important; }
 [data-testid="stSidebarContent"] {
-    overflow-y: auto !important; height: 100vh !important;
-    padding: 0 0.5rem 1rem 0.5rem !important; margin: 0 !important;
+    overflow-y: auto !important;
+    height: 100vh !important;
+    padding: 0 0.75rem 2rem 0.75rem !important;
 }
-[data-testid="stSidebarContent"] > div:first-child { margin-top: 0 !important; padding-top: 0 !important; }
-[data-testid="stSidebar"] [data-testid="stVerticalBlock"] { gap: 0.5rem !important; padding-top: 0 !important; margin-top: 0 !important; }
-[data-testid="stSidebar"] .element-container { margin-top: 0 !important; }
 [data-testid="stSidebar"] * { cursor: default !important; }
 [data-testid="stSidebar"] button,
-[data-testid="stSidebar"] a,
 [data-testid="stSidebar"] input[type="radio"],
 [data-testid="stSidebar"] label[data-baseweb="radio"] { cursor: pointer !important; }
-[data-testid="stSidebar"] label[data-baseweb="radio"] { font-size: 13px !important; line-height: 1.2 !important; }
-[data-testid="stSidebar"] [data-testid="stVerticalBlock"] > div { padding: 0.2rem 0 !important; }
-.main { margin-left: 0 !important; transition: none !important; }
-[data-testid="stSidebar"] { box-shadow: 2px 0 8px rgba(0,0,0,0.15); }
-.block-container { max-width: 1400px !important; padding-top: 2rem !important; }
-.block-container { max-width: 1400px !important; padding-top: 2rem !important; }
-.stDataFrame, .stTable { max-width: 100% !important; overflow-x: auto !important; }
-table { table-layout: auto !important; width: 100% !important; min-width: 600px !important; }
-thead tr th { background-color: #f8f8f8 !important; white-space: nowrap !important; padding: 8px 12px !important; }
-tbody td { white-space: nowrap !important; padding: 6px 10px !important; }
-h1 a, h2 a, h3 a, h4 a, h5 a, h6 a { display: none !important; pointer-events: none !important; }
-[data-testid="stHeaderActionElements"] { display: none !important; }
-@media (max-width: 900px) {
-    [data-testid="stSidebar"] { position: relative !important; width: 100% !important; height: auto !important; border-right: none !important; }
-    .main { margin-left: 0 !important; }
-    .block-container { max-width: 100% !important; padding: 0.5rem !important; }
+[data-testid="stSidebar"] label[data-baseweb="radio"] {
+    color: var(--light) !important;
+    font-size: 0.88rem !important;
+    padding: 0.5rem 0.75rem !important;
+    border-radius: 8px !important;
+    transition: background 0.15s !important;
+}
+[data-testid="stSidebar"] label[data-baseweb="radio"]:hover {
+    background: rgba(240,165,0,0.1) !important;
+}
+
+/* メインのmargin */
+section[data-testid="stMain"] {
+    transition: margin-left 0.3s cubic-bezier(0.4,0,0.2,1) !important;
+}
+
+/* markdown */
+[data-testid="stMarkdownContainer"] p { color: var(--light) !important; }
+[data-testid="stMarkdownContainer"] a { color: var(--gold) !important; }
+
+/* progress */
+[data-testid="stProgressBar"] > div { background: var(--gold) !important; }
+
+/* divider */
+[data-testid="stVerticalBlock"] { gap: 0.5rem; }
+
+@media (max-width: 768px) {
+    .block-container { padding: 1rem !important; }
+}
+</style>
+""", unsafe_allow_html=True)
+
+st.markdown("""
+<style>
+/* サイドバーロゴエリア */
+.sidebar-logo {
+    text-align: center;
+    padding: 1.5rem 1rem 1rem;
+    border-bottom: 1px solid rgba(240,165,0,0.15);
+    margin-bottom: 1rem;
+}
+.sidebar-logo .logo-icon { font-size: 2.5rem; }
+.sidebar-logo .logo-title {
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.9rem;
+    color: #f0a500;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-top: 0.3rem;
+}
+.sidebar-section-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #8899aa;
+    padding: 0.5rem 0.75rem 0.25rem;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -74,6 +222,8 @@ st.markdown("""
 <style>
 [data-testid="stDataFrame"] { animation: none !important; transition: none !important; }
 .stDataFrame { animation: none !important; transition: none !important; }
+[data-testid="stMetricValue"] { font-size: 1.2rem !important; }
+[data-testid="stMetricLabel"] { font-size: 0.7rem !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -158,8 +308,24 @@ def add_to_history(player_name, predict_year, predicted_salary, actual_salary, p
 # ============================================================
 # タイトル
 # ============================================================
-st.title("⚾ NPB選手年俸予測システム")
-st.markdown("---")
+st.markdown("""
+<div style="
+    background: linear-gradient(135deg, #1b2f45 0%, #0d1b2a 100%);
+    border: 1px solid rgba(240,165,0,0.2);
+    border-radius: 16px;
+    padding: 1.5rem 2rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+">
+    <div style="font-size:2.8rem;">⚾</div>
+    <div>
+        <div style="font-family:'Oswald',sans-serif;font-size:1.8rem;color:#f0a500;letter-spacing:2px;text-transform:uppercase;line-height:1.1;">NPB Salary Predictor</div>
+        <div style="color:#8899aa;font-size:0.85rem;margin-top:0.2rem;">NPB選手年俸予測システム</div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
 if 'model_trained' not in st.session_state:
     st.session_state.model_trained = False
@@ -521,7 +687,14 @@ if data_loaded:
     # ----------------------------------------------------------
     # サイドバー
     # ----------------------------------------------------------
-    st.sidebar.markdown("### 🎯 機能選択")
+    st.sidebar.markdown("""
+    <div class="sidebar-logo">
+        <div class="logo-icon">⚾</div>
+        <div class="logo-title">NPB Salary<br>Predictor</div>
+    </div>
+    <div class="sidebar-section-label">メニュー</div>
+    """, unsafe_allow_html=True)
+
     menu = st.sidebar.radio(
         "メニュー",
         ["🏠 ホーム", "🔍 選手予測", "📊 選手比較", "🔬 モデル比較",
@@ -529,55 +702,20 @@ if data_loaded:
          "🏆 精度ランキング", "💰 年俸別予測", "📜 予測履歴"],
         key="main_menu", label_visibility="collapsed"
     )
-    st.sidebar.markdown("""
-    <script>
-    (function() {
-        var doc = window.parent.document;
-        function setupSidebar() {
-            var sidebar = doc.querySelector('[data-testid="stSidebar"]');
-            var collapseBtn = doc.querySelector('[data-testid="collapsedControl"]');
-            if (!sidebar || !collapseBtn) { setTimeout(setupSidebar, 300); return; }
-            var main = doc.querySelector('.main');
-            collapseBtn.addEventListener('click', function() {
-                sidebar.classList.toggle('sidebar-open');
-                if (main) {
-                    if (sidebar.classList.contains('sidebar-open')) {
-                        main.style.marginLeft = '280px';
-                    } else {
-                        main.style.marginLeft = '0px';
-                    }
-                }
-            });
-            var radios = sidebar.querySelectorAll('input[type="radio"]');
-            radios.forEach(function(r) {
-                r.addEventListener('change', function() {
-                    setTimeout(function() {
-                        sidebar.classList.remove('sidebar-open');
-                        if (main) main.style.marginLeft = '0px';
-                    }, 200);
-                });
-            });
-        }
-        setupSidebar();
-    })();
-    </script>
-    """, unsafe_allow_html=True)
 
     # ----------------------------------------------------------
     # ホーム
     # ----------------------------------------------------------
     if menu == "🏠 ホーム":
-        col1, col2, col3, col4 = st.columns(4)
+        col1, col2 = st.columns(2)
         with col1:
             st.metric("野手採用モデル", st.session_state.b_name)
-        with col2:
             st.metric("野手R²", f"{st.session_state.b_results[st.session_state.b_name]['R2']:.4f}")
-        with col3:
+        with col2:
             if st.session_state.p_name:
                 st.metric("投手採用モデル", st.session_state.p_name)
             else:
                 st.metric("投手採用モデル", "データなし")
-        with col4:
             if st.session_state.p_results:
                 st.metric("投手R²", f"{st.session_state.p_results[st.session_state.p_name]['R2']:.4f}")
             else:
