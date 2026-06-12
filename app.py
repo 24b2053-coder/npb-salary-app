@@ -16,7 +16,8 @@ warnings.filterwarnings('ignore')
 st.set_page_config(
     page_title="NPB選手年俸予測システム",
     page_icon="⚾",
-    layout="centered",
+    layout="wide",
+    initial_sidebar_state="expanded",
 )
 
 st.markdown("""
@@ -186,6 +187,8 @@ section[data-testid="stMain"] {
 @media (max-width: 768px) {
     .block-container { padding: 1rem !important; }
 }
+[data-testid="collapsedControl"] { display: none !important; }
+[data-testid="stSidebarCollapseButton"] { display: none !important; }
 </style>
 """, unsafe_allow_html=True)
 
