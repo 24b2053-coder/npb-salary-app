@@ -191,11 +191,8 @@ section[data-testid="stMain"] {
     [data-testid="stSidebarCollapseButton"] { display: block !important; }
     .block-container { max-width: 100% !important; padding: 0.5rem !important; }
 }
-[data-testid="collapsedControl"] svg { color: white !important; fill: white !important; stroke: white !important; }
-[data-testid="collapsedControl"] svg path { fill: white !important; stroke: white !important; }
-[data-testid="stSidebarCollapseButton"] svg { fill: white !important; stroke: white !important; }
-[data-testid="stSidebarCollapseButton"] svg path { fill: white !important; stroke: white !important; }
-[data-testid="stSidebarCollapseButton"] button { color: white !important; }
+[data-testid="collapsedControl"] * { color: white !important; fill: white !important; stroke: white !important; }
+[data-testid="stSidebarCollapseButton"] * { color: white !important; fill: white !important; stroke: white !important; }
 </style>
 """, unsafe_allow_html=True)
 
