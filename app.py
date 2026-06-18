@@ -331,9 +331,9 @@ if 'prediction_history' not in st.session_state:
 def load_data():
     try:
         # 年俸ファイルは年度別3ファイル（順位,選手名,年齢,ポジション,チーム,年俸,年俸_円）
-        sal23 = pd.read_csv('data/salary_2023.csv')
-        sal24 = pd.read_csv('data/salary_2024.csv')
-        sal25 = pd.read_csv('data/salary_2025.csv')
+        sal23 = pd.read_csv('data/besmoney_salary_2023.csv')
+        sal24 = pd.read_csv('data/besmoney_salary_2024.csv')
+        sal25 = pd.read_csv('data/besmoney_salary_2025.csv')
         salary_df = (sal23, sal24, sal25)
 
         stats_2023  = pd.read_csv('data/stats_2023.csv')
@@ -343,18 +343,7 @@ def load_data():
         pitcher_df  = pd.read_csv('data/npb_pitcher_stats.csv')
         return salary_df, stats_2023, stats_2024, stats_2025, titles_df, pitcher_df, True
     except FileNotFoundError:
-        # ファイル名が違う場合も試す
-        try:
-            sal_all = pd.read_csv('data/salary_2023&2024&2025.csv')
-            salary_df = sal_all  # 旧形式フォールバック
-            stats_2023  = pd.read_csv('data/stats_2023.csv')
-            stats_2024  = pd.read_csv('data/stats_2024.csv')
-            stats_2025  = pd.read_csv('data/stats_2025.csv')
-            titles_df   = pd.read_csv('data/titles_2023&2024&2025.csv')
-            pitcher_df  = pd.read_csv('data/npb_pitcher_stats.csv')
-            return salary_df, stats_2023, stats_2024, stats_2025, titles_df, pitcher_df, True
-        except FileNotFoundError:
-            return None, None, None, None, None, None, False
+        return None, None, None, None, None, None, False
 
 salary_df, stats_2023, stats_2024, stats_2025, titles_df, pitcher_df_raw, data_loaded = load_data()
 
