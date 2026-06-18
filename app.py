@@ -245,6 +245,13 @@ except ImportError:
 # ユーティリティ関数
 # ============================================================
 
+def normalize_name(name):
+    """選手名の全角・半角スペースを除去して正規化"""
+    if pd.isna(name):
+        return name
+    return str(name).replace('\u3000', '').replace(' ', '').replace('\u00a0', '').strip()
+
+
 def parse_innings_pitched(val):
     if val is None or (isinstance(val, float) and np.isnan(val)):
         return np.nan
@@ -345,9 +352,7 @@ if 'prediction_history' not in st.session_state:
 @st.cache_data
 def load_data():
     try:
-        # 年俸: 年度別3ファイル
         salary_df = pd.read_csv('data/salary_2023&2024&2025.csv')
-
         stats_2023  = pd.read_csv('data/stats_2023.csv')
         stats_2024  = pd.read_csv('data/stats_2024.csv')
         stats_2025  = pd.read_csv('data/stats_2025.csv')
@@ -375,14 +380,12 @@ if not data_loaded:
         file_dict = {}
         for file in uploaded_files:
             name = file.name.lower()
-            # 年俸ファイル（besmoney or salary）
             if ('besmoney' in name or 'salary' in name) and '2023' in name:
                 file_dict['salary_2023'] = file
             elif ('besmoney' in name or 'salary' in name) and '2024' in name:
                 file_dict['salary_2024'] = file
             elif ('besmoney' in name or 'salary' in name) and '2025' in name:
                 file_dict['salary_2025'] = file
-            # その他
             elif 'titles' in name or 'タイトル' in name:
                 file_dict['titles'] = file
             elif 'pitcher' in name or '投手' in name:
@@ -428,11 +431,11 @@ def prepare_salary_long(_salary_df):
         sal25  = row.get('年俸_円_2025')
 
         if pd.notna(name23) and pd.notna(sal23) and sal23 > 0:
-            rows.append({'選手名': name23, '年俸_円': sal23, '年度': 2023})
+            rows.append({'選手名': normalize_name(name23), '年俸_円': sal23, '年度': 2023})
         if pd.notna(name24) and pd.notna(sal24) and sal24 > 0:
-            rows.append({'選手名': name24, '年俸_円': sal24, '年度': 2024})
+            rows.append({'選手名': normalize_name(name24), '年俸_円': sal24, '年度': 2024})
         if pd.notna(name24) and pd.notna(sal25) and sal25 > 0:
-            rows.append({'選手名': name24, '年俸_円': sal25, '年度': 2025})
+            rows.append({'選手名': normalize_name(name24), '年俸_円': sal25, '年度': 2025})
 
     salary_long = pd.DataFrame(rows)
     salary_long = salary_long.drop_duplicates(subset=['選手名', '年度'], keep='first')
@@ -442,13 +445,18 @@ def prepare_salary_long(_salary_df):
 @st.cache_data
 def prepare_batter_data(_salary_df, _stats_2023, _stats_2024, _stats_2025, _titles_df):
     """野手データの前処理"""
-    titles_clean = _titles_df.dropna(subset=['選手名'])
+    titles_clean = _titles_df.dropna(subset=['選手名']).copy()
+    titles_clean['選手名'] = titles_clean['選手名'].apply(normalize_name)
     title_summary = titles_clean.groupby(['選手名', '年度']).size().reset_index(name='タイトル数')
 
     s23 = _stats_2023.copy(); s23['年度'] = 2023
     s24 = _stats_2024.copy(); s24['年度'] = 2024
     s25 = _stats_2025.copy(); s25['年度'] = 2025
     stats_all = pd.concat([s23, s24, s25], ignore_index=True)
+
+    # 野手成績の選手名も正規化
+    if '選手名' in stats_all.columns:
+        stats_all['選手名'] = stats_all['選手名'].apply(normalize_name)
 
     salary_long = prepare_salary_long(_salary_df)
 
@@ -489,12 +497,19 @@ def prepare_pitcher_data(_pitcher_df_raw, _salary_df, _titles_df):
     df = _pitcher_df_raw.copy()
     df.columns = [c.lstrip('\ufeff').strip() for c in df.columns]
 
+    # ★ 修正: 投手CSVの選手名の全角・半角スペースを除去
+    if '選手名' in df.columns:
+        df['選手名'] = df['選手名'].apply(normalize_name)
+
     df['投球回_実数'] = df['投球回'].apply(parse_innings_pitched)
     df['防御率'] = pd.to_numeric(df['防御率'], errors='coerce')
     df['勝率']   = pd.to_numeric(df['勝率'],   errors='coerce')
 
-    titles_clean = _titles_df.dropna(subset=['選手名'])
+    # ★ 修正: タイトルデータの選手名も正規化
+    titles_clean = _titles_df.dropna(subset=['選手名']).copy()
+    titles_clean['選手名'] = titles_clean['選手名'].apply(normalize_name)
     title_summary = titles_clean.groupby(['選手名', '年度']).size().reset_index(name='タイトル数')
+
     df = pd.merge(df, title_summary, on=['選手名', '年度'], how='left')
     df['タイトル数'] = df['タイトル数'].fillna(0)
 
