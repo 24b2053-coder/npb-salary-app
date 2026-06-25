@@ -53,7 +53,8 @@ html, body, [data-testid="stAppViewContainer"] {
     margin-right: auto !important;
 }
 
-h1 {
+/* ヘッダー */
+h1 { 
     font-family: 'Oswald', sans-serif !important;
     font-size: 2.2rem !important;
     color: var(--gold) !important;
@@ -64,8 +65,10 @@ h2, h3 { color: var(--gold2) !important; }
 h1 a, h2 a, h3 a, h4 a { display: none !important; }
 [data-testid="stHeaderActionElements"] { display: none !important; }
 
+/* hr */
 hr { border-color: var(--navy2) !important; }
 
+/* メトリクス */
 [data-testid="stMetric"] {
     background: var(--navy2) !important;
     border: 1px solid rgba(240,165,0,0.2) !important;
@@ -75,6 +78,7 @@ hr { border-color: var(--navy2) !important; }
 [data-testid="stMetricLabel"] { color: var(--gray) !important; font-size: 0.75rem !important; }
 [data-testid="stMetricValue"] { color: var(--gold) !important; font-weight: 700 !important; }
 
+/* ボタン */
 [data-testid="stButton"] button[kind="primary"] {
     background: linear-gradient(135deg, var(--gold), var(--pink)) !important;
     color: var(--navy) !important;
@@ -96,6 +100,7 @@ hr { border-color: var(--navy2) !important; }
     border-radius: 8px !important;
 }
 
+/* 入力 */
 [data-testid="stTextInput"] input,
 [data-testid="stSelectbox"] div,
 [data-testid="stNumberInput"] input {
@@ -106,11 +111,13 @@ hr { border-color: var(--navy2) !important; }
 }
 [data-testid="stSlider"] [data-testid="stThumbValue"] { color: var(--gold) !important; }
 
+/* success / warning / error */
 [data-testid="stAlert"] {
     border-radius: 10px !important;
     border-left-width: 4px !important;
 }
 
+/* データフレーム */
 [data-testid="stDataFrame"] {
     border-radius: 10px !important;
     overflow: hidden !important;
@@ -119,16 +126,23 @@ hr { border-color: var(--navy2) !important; }
 }
 .stDataFrame { animation: none !important; transition: none !important; }
 
+/* expander */
 [data-testid="stExpander"] {
     background: var(--navy2) !important;
     border: 1px solid rgba(240,165,0,0.15) !important;
     border-radius: 10px !important;
 }
 
+/* spinner */
 [data-testid="stSpinner"] { color: var(--gold) !important; }
+
+/* radio */
 [data-testid="stRadio"] label { color: var(--light) !important; }
+
+/* multiselect */
 [data-testid="stMultiSelect"] { background: var(--navy2) !important; }
 
+/* サイドバー */
 [data-testid="stSidebar"] {
     background: linear-gradient(180deg, #0d1b2a 0%, #1a2f45 100%) !important;
     border-right: 1px solid rgba(240,165,0,0.15) !important;
@@ -155,13 +169,19 @@ hr { border-color: var(--navy2) !important; }
     background: rgba(240,165,0,0.1) !important;
 }
 
+/* メインのmargin */
 section[data-testid="stMain"] {
     transition: margin-left 0.3s cubic-bezier(0.4,0,0.2,1) !important;
 }
 
+/* markdown */
 [data-testid="stMarkdownContainer"] p { color: var(--light) !important; }
 [data-testid="stMarkdownContainer"] a { color: var(--gold) !important; }
+
+/* progress */
 [data-testid="stProgressBar"] > div { background: var(--gold) !important; }
+
+/* divider */
 [data-testid="stVerticalBlock"] { gap: 0.5rem; }
 
 [data-testid="collapsedControl"] { display: none !important; }
@@ -178,6 +198,7 @@ section[data-testid="stMain"] {
 
 st.markdown("""
 <style>
+/* サイドバーロゴエリア */
 .sidebar-logo {
     text-align: center;
     padding: 1.5rem 1rem 1rem;
@@ -213,6 +234,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# 日本語フォント設定
 try:
     import matplotlib_fontja
     matplotlib_fontja.japanize()
@@ -222,13 +244,6 @@ except ImportError:
 # ============================================================
 # ユーティリティ関数
 # ============================================================
-
-def normalize_name(name):
-    """選手名の正規化（全角スペース・半角スペース統一、前後空白除去）"""
-    if pd.isna(name):
-        return name
-    return str(name).replace('\u3000', ' ').replace('　', ' ').strip()
-
 
 def parse_innings_pitched(val):
     if val is None or (isinstance(val, float) and np.isnan(val)):
@@ -330,7 +345,9 @@ if 'prediction_history' not in st.session_state:
 @st.cache_data
 def load_data():
     try:
-        salary_df   = pd.read_csv('data/salary_2023&2024&2025.csv')
+        # 年俸: 年度別3ファイル
+        salary_df = pd.read_csv('data/salary_2023&2024&2025.csv')
+
         stats_2023  = pd.read_csv('data/stats_2023.csv')
         stats_2024  = pd.read_csv('data/stats_2024.csv')
         stats_2025  = pd.read_csv('data/stats_2025.csv')
@@ -343,7 +360,7 @@ def load_data():
 salary_df, stats_2023, stats_2024, stats_2025, titles_df, pitcher_df_raw, data_loaded = load_data()
 
 # ============================================================
-# ファイルアップロード処理
+# ファイルアップロード処理（dataフォルダがない場合）
 # ============================================================
 if not data_loaded:
     st.sidebar.markdown("**CSVファイルを選択してアップロード（8つ全て）：**")
@@ -358,12 +375,14 @@ if not data_loaded:
         file_dict = {}
         for file in uploaded_files:
             name = file.name.lower()
+            # 年俸ファイル（besmoney or salary）
             if ('besmoney' in name or 'salary' in name) and '2023' in name:
                 file_dict['salary_2023'] = file
             elif ('besmoney' in name or 'salary' in name) and '2024' in name:
                 file_dict['salary_2024'] = file
             elif ('besmoney' in name or 'salary' in name) and '2025' in name:
                 file_dict['salary_2025'] = file
+            # その他
             elif 'titles' in name or 'タイトル' in name:
                 file_dict['titles'] = file
             elif 'pitcher' in name or '投手' in name:
@@ -409,14 +428,13 @@ def prepare_salary_long(_salary_df):
         sal25  = row.get('年俸_円_2025')
 
         if pd.notna(name23) and pd.notna(sal23) and sal23 > 0:
-            rows.append({'選手名': normalize_name(name23), '年俸_円': float(sal23), '年度': 2023})
+            rows.append({'選手名': name23, '年俸_円': sal23, '年度': 2023})
         if pd.notna(name24) and pd.notna(sal24) and sal24 > 0:
-            rows.append({'選手名': normalize_name(name24), '年俸_円': float(sal24), '年度': 2024})
+            rows.append({'選手名': name24, '年俸_円': sal24, '年度': 2024})
         if pd.notna(name24) and pd.notna(sal25) and sal25 > 0:
-            rows.append({'選手名': normalize_name(name24), '年俸_円': float(sal25), '年度': 2025})
+            rows.append({'選手名': name24, '年俸_円': sal25, '年度': 2025})
 
     salary_long = pd.DataFrame(rows)
-    salary_long['年度'] = salary_long['年度'].astype(int)
     salary_long = salary_long.drop_duplicates(subset=['選手名', '年度'], keep='first')
     return salary_long
 
@@ -424,15 +442,13 @@ def prepare_salary_long(_salary_df):
 @st.cache_data
 def prepare_batter_data(_salary_df, _stats_2023, _stats_2024, _stats_2025, _titles_df):
     """野手データの前処理"""
-    titles_clean = _titles_df.dropna(subset=['選手名']).copy()
-    titles_clean['選手名'] = titles_clean['選手名'].apply(normalize_name)
+    titles_clean = _titles_df.dropna(subset=['選手名'])
     title_summary = titles_clean.groupby(['選手名', '年度']).size().reset_index(name='タイトル数')
 
     s23 = _stats_2023.copy(); s23['年度'] = 2023
     s24 = _stats_2024.copy(); s24['年度'] = 2024
     s25 = _stats_2025.copy(); s25['年度'] = 2025
     stats_all = pd.concat([s23, s24, s25], ignore_index=True)
-    stats_all['選手名'] = stats_all['選手名'].apply(normalize_name)
 
     salary_long = prepare_salary_long(_salary_df)
 
@@ -473,66 +489,33 @@ def prepare_pitcher_data(_pitcher_df_raw, _salary_df, _titles_df):
     df = _pitcher_df_raw.copy()
     df.columns = [c.lstrip('\ufeff').strip() for c in df.columns]
 
-    # 選手名・年度の正規化
-    df['選手名'] = df['選手名'].apply(normalize_name)
-    df['年度'] = pd.to_numeric(df['年度'], errors='coerce').fillna(0).astype(int)
-
     df['投球回_実数'] = df['投球回'].apply(parse_innings_pitched)
     df['防御率'] = pd.to_numeric(df['防御率'], errors='coerce')
     df['勝率']   = pd.to_numeric(df['勝率'],   errors='coerce')
 
-    # タイトル数（mergeせずsetで付与）
-    titles_clean = _titles_df.dropna(subset=['選手名']).copy()
-    titles_clean['選手名'] = titles_clean['選手名'].apply(normalize_name)
-    titles_clean['年度'] = pd.to_numeric(titles_clean['年度'], errors='coerce').fillna(0).astype(int)
-    title_map = titles_clean.groupby(['選手名', '年度']).size().to_dict()
-    df['タイトル数'] = [title_map.get((n, y), 0) for n, y in zip(df['選手名'], df['年度'])]
+    titles_clean = _titles_df.dropna(subset=['選手名'])
+    title_summary = titles_clean.groupby(['選手名', '年度']).size().reset_index(name='タイトル数')
+    df = pd.merge(df, title_summary, on=['選手名', '年度'], how='left')
+    df['タイトル数'] = df['タイトル数'].fillna(0)
 
-    # stats_all_with_titles（選手予測画面用・全年度保持）
+    salary_long = prepare_salary_long(_salary_df)
+
+    df['予測年度'] = df['年度'] + 1
+    merged = pd.merge(
+        df,
+        salary_long,
+        left_on=['選手名', '予測年度'],
+        right_on=['選手名', '年度'],
+        suffixes=('_成績', '_年俸')
+    )
+    merged.drop(columns=['年度_年俸', '予測年度'], inplace=True)
+    merged.rename(columns={'年度_成績': '成績年度'}, inplace=True)
+
     stats_all_with_titles = df.copy()
     if '年齢' not in stats_all_with_titles.columns:
         stats_all_with_titles['年齢'] = 28
 
-    # 年俸データ
-    salary_long = prepare_salary_long(_salary_df)
-    # salary_longの年度はすでにint
-
-    # 年俸データが持つ年度 = 2023,2024,2025
-    # 翌年度マージ: 投手成績年度+1 == 年俸年度
-    # 対象成績年度: 2022,2023,2024
-    df_target = df[df['年度'].isin([2022, 2023, 2024])].copy()
-    df_target = df_target.rename(columns={'年度': '成績年度'})
-    df_target['_merge_year'] = df_target['成績年度'] + 1
-
-    sal_renamed = salary_long.rename(columns={'年度': '_merge_year'})
-
-    merged = pd.merge(
-        df_target,
-        sal_renamed[['選手名', '_merge_year', '年俸_円']],
-        on=['選手名', '_merge_year'],
-        how='inner'
-    )
-    merged.drop(columns=['_merge_year'], inplace=True)
-
-    if len(merged) >= 5:
-        return merged, stats_all_with_titles, salary_long
-
-    # フォールバック: 同年度マージ
-    df_same = df[df['年度'].isin([2023, 2024, 2025])].copy()
-    df_same = df_same.rename(columns={'年度': '成績年度'})
-    sal_same = salary_long.rename(columns={'年度': '成績年度'})
-
-    merged2 = pd.merge(
-        df_same,
-        sal_same[['選手名', '成績年度', '年俸_円']],
-        on=['選手名', '成績年度'],
-        how='inner'
-    )
-
-    if len(merged2) >= 5:
-        return merged2, stats_all_with_titles, salary_long
-
-    return pd.DataFrame(), stats_all_with_titles, salary_long
+    return merged, stats_all_with_titles, salary_long
 
 
 # ============================================================
@@ -613,18 +596,13 @@ def train_pitcher_models(_merged_df):
 
     ml_df = ml_df[feature_cols + ['年俸_円', '選手名', '成績年度']].dropna()
 
-    # 閾値を5件に緩和
-    if len(ml_df) < 5:
+    if len(ml_df) < 10:
         return None, None, None, feature_cols, {}, ml_df
 
     X = ml_df[feature_cols]
     y_log = np.log1p(ml_df['年俸_円'])
 
-    # サンプル数が少ない場合はtest_sizeを調整
-    test_size = 0.2 if len(ml_df) >= 25 else max(1, int(len(ml_df) * 0.2))
-    X_train, X_test, y_train_log, y_test_log = train_test_split(
-        X, y_log, test_size=test_size, random_state=42
-    )
+    X_train, X_test, y_train_log, y_test_log = train_test_split(X, y_log, test_size=0.2, random_state=42)
     y_test_orig = np.expm1(y_test_log)
 
     scaler = StandardScaler()
@@ -698,14 +676,6 @@ if data_loaded:
                     pitcher_df_raw, salary_df, titles_df
                 )
                 p_model, p_name, p_scaler, p_fcols, p_results, p_ml_df = train_pitcher_models(pitcher_merged)
-
-                # マージ結果が少ない場合に警告（エラーではなく続行）
-                if p_model is None:
-                    st.warning(
-                        f"⚠️ 投手モデルの訓練データが不足しています（マージ件数: {len(pitcher_merged)}件）。"
-                        "投手データの年度と年俸データの年度が合っているか確認してください。"
-                        "投手機能は制限されますが、野手機能は正常に使用できます。"
-                    )
             else:
                 pitcher_merged = pitcher_stats_all = None
                 p_model = p_name = p_scaler = p_fcols = p_results = p_ml_df = None
@@ -759,14 +729,6 @@ if data_loaded:
                 st.metric("投手R²", "N/A")
 
         st.subheader("📖 使い方")
-
-        # キャッシュクリアボタン（古いキャッシュが残っている場合に使用）
-        if st.button("🔄 キャッシュをクリアして再読み込み", type="secondary"):
-            st.cache_data.clear()
-            st.cache_resource.clear()
-            st.session_state.model_trained = False
-            st.rerun()
-
         st.markdown("""
         1. **左サイドバー**のメニューから機能を選択
         2. **野手 / 投手**を切り替えて予測
@@ -1736,7 +1698,9 @@ else:
     **方法1: dataフォルダに配置**
     ```
     data/
-    ├── salary_2023&2024&2025.csv
+    ├── besmoney_salary_2023.csv
+    ├── besmoney_salary_2024.csv
+    ├── besmoney_salary_2025.csv
     ├── stats_2023.csv
     ├── stats_2024.csv
     ├── stats_2025.csv
