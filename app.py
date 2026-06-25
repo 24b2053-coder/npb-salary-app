@@ -472,77 +472,76 @@ def prepare_pitcher_data(_pitcher_df_raw, _salary_df, _titles_df):
     df = _pitcher_df_raw.copy()
     df.columns = [c.lstrip('\ufeff').strip() for c in df.columns]
 
-    # 選手名の正規化
+    # 選手名・年度の正規化
     df['選手名'] = df['選手名'].apply(normalize_name)
+    df['年度'] = pd.to_numeric(df['年度'], errors='coerce').astype('Int64')
 
     df['投球回_実数'] = df['投球回'].apply(parse_innings_pitched)
     df['防御率'] = pd.to_numeric(df['防御率'], errors='coerce')
     df['勝率']   = pd.to_numeric(df['勝率'],   errors='coerce')
 
-    # タイトルデータのマージ（年度列が分裂しないよう注意）
+    # タイトル数をmap形式で付与（mergeを使わず列分裂を回避）
     titles_clean = _titles_df.dropna(subset=['選手名']).copy()
     titles_clean['選手名'] = titles_clean['選手名'].apply(normalize_name)
-    title_summary = titles_clean.groupby(['選手名', '年度']).size().reset_index(name='タイトル数')
-    df = pd.merge(df, title_summary, on=['選手名', '年度'], how='left')
-    df['タイトル数'] = df['タイトル数'].fillna(0)
-
-    # マージ後に年度列名が変わっていたら修正
-    if '年度_x' in df.columns:
-        df.rename(columns={'年度_x': '年度'}, inplace=True)
-    if '年度_y' in df.columns:
-        df.drop(columns=['年度_y'], inplace=True)
-
-    salary_long = prepare_salary_long(_salary_df)
-
-    # 年俸データは2023〜2025のみなので、投手CSVも該当年度に絞る
-    df_filtered = df[df['年度'].isin([2022, 2023, 2024, 2025])].copy()
-
-    # ── マージ戦略1: 翌年度マージ（成績年 → 翌年の年俸） ──
-    df_filtered['予測年度'] = df_filtered['年度'] + 1
-    merged = pd.merge(
-        df_filtered,
-        salary_long,
-        left_on=['選手名', '予測年度'],
-        right_on=['選手名', '年度'],
-        suffixes=('_成績', '_年俸')
+    titles_clean['年度'] = pd.to_numeric(titles_clean['年度'], errors='coerce').astype('Int64')
+    title_map = titles_clean.groupby(['選手名', '年度']).size()
+    df['タイトル数'] = df.apply(
+        lambda r: title_map.get((r['選手名'], r['年度']), 0), axis=1
     )
 
-    # ── マージ戦略2: 結果が少なければ同年度マージも追加 ──
-    if len(merged) < 10:
-        merged_same = pd.merge(
-            df_filtered,
-            salary_long,
-            left_on=['選手名', '年度'],
-            right_on=['選手名', '年度'],
-            suffixes=('_成績', '_年俸')
-        )
-        # 年俸列名を統一
-        for alt_col in ['年俸_円_年俸', '年俸_円_成績']:
-            if alt_col in merged_same.columns and '年俸_円' not in merged_same.columns:
-                merged_same.rename(columns={alt_col: '年俸_円'}, inplace=True)
+    # 年俸データ（2023〜2025）
+    salary_long = prepare_salary_long(_salary_df)
+    salary_long['年度'] = pd.to_numeric(salary_long['年度'], errors='coerce').astype('Int64')
 
-        if len(merged_same) > len(merged) and '年俸_円' in merged_same.columns:
-            merged_same['成績年度'] = merged_same['年度']
-            drop_cols = [c for c in ['予測年度', '年度_年俸', '年度_成績'] if c in merged_same.columns]
-            merged_same.drop(columns=drop_cols, inplace=True, errors='ignore')
-            stats_all_with_titles = df.copy()
-            if '年齢' not in stats_all_with_titles.columns:
-                stats_all_with_titles['年齢'] = 28
-            return merged_same, stats_all_with_titles, salary_long
-
-    # 通常の後処理
-    drop_cols = [c for c in ['年度_年俸', '予測年度'] if c in merged.columns]
-    merged.drop(columns=drop_cols, inplace=True, errors='ignore')
-    if '年度_成績' in merged.columns:
-        merged.rename(columns={'年度_成績': '成績年度'}, inplace=True)
-    elif '年度' in merged.columns and '成績年度' not in merged.columns:
-        merged.rename(columns={'年度': '成績年度'}, inplace=True)
-
+    # stats_all_with_titles（選手予測用）
     stats_all_with_titles = df.copy()
     if '年齢' not in stats_all_with_titles.columns:
         stats_all_with_titles['年齢'] = 28
 
-    return merged, stats_all_with_titles, salary_long
+    # 年俸データは2023〜2025のみ → 成績年度は2022〜2025に絞る
+    df_filtered = df[df['年度'].isin([2022, 2023, 2024, 2025])].copy()
+
+    # 翌年度マージ: 成績年度+1 == 年俸年度
+    rows = []
+    for _, srow in df_filtered.iterrows():
+        next_year = srow['年度'] + 1
+        sal_match = salary_long[
+            (salary_long['選手名'] == srow['選手名']) &
+            (salary_long['年度'] == next_year)
+        ]
+        if not sal_match.empty:
+            new_row = srow.to_dict()
+            new_row['年俸_円'] = sal_match['年俸_円'].values[0]
+            new_row['成績年度'] = srow['年度']
+            rows.append(new_row)
+
+    if len(rows) >= 5:
+        merged = pd.DataFrame(rows)
+        if '年度' in merged.columns:
+            merged.drop(columns=['年度'], inplace=True, errors='ignore')
+        return merged, stats_all_with_titles, salary_long
+
+    # フォールバック: 同年度マージ
+    rows2 = []
+    for _, srow in df_filtered.iterrows():
+        sal_match = salary_long[
+            (salary_long['選手名'] == srow['選手名']) &
+            (salary_long['年度'] == srow['年度'])
+        ]
+        if not sal_match.empty:
+            new_row = srow.to_dict()
+            new_row['年俸_円'] = sal_match['年俸_円'].values[0]
+            new_row['成績年度'] = srow['年度']
+            rows2.append(new_row)
+
+    if rows2:
+        merged2 = pd.DataFrame(rows2)
+        if '年度' in merged2.columns:
+            merged2.drop(columns=['年度'], inplace=True, errors='ignore')
+        return merged2, stats_all_with_titles, salary_long
+
+    # どちらも失敗
+    return pd.DataFrame(), stats_all_with_titles, salary_long
 
 
 # ============================================================
