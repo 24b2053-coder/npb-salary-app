@@ -324,11 +324,6 @@ if 'model_trained' not in st.session_state:
 if 'prediction_history' not in st.session_state:
     st.session_state.prediction_history = []
 
-# キャッシュを強制クリア（デバッグ用）
-st.cache_data.clear()
-st.cache_resource.clear()
-st.session_state.model_trained = False  # デバッグ用: 毎回再訓練
-
 # ============================================================
 # データ読み込み
 # ============================================================
@@ -477,15 +472,6 @@ def prepare_pitcher_data(_pitcher_df_raw, _salary_df, _titles_df):
     df = _pitcher_df_raw.copy()
     df.columns = [c.lstrip('\ufeff').strip() for c in df.columns]
 
-    # ── デバッグ表示 ──
-    st.write("【投手CSV】列名:", df.columns.tolist())
-    st.write("【投手CSV】年度の値:", sorted(df['年度'].unique().tolist()) if '年度' in df.columns else "年度列なし")
-    st.write("【投手CSV】選手名サンプル（先頭5件）:", df['選手名'].head(5).tolist() if '選手名' in df.columns else "選手名列なし")
-
-    salary_long = prepare_salary_long(_salary_df)
-    st.write("【年俸CSV】年度の値:", sorted(salary_long['年度'].unique().tolist()))
-    st.write("【年俸CSV】選手名サンプル（先頭5件）:", salary_long['選手名'].head(5).tolist())
-
     # 選手名の正規化
     df['選手名'] = df['選手名'].apply(normalize_name)
 
@@ -493,38 +479,43 @@ def prepare_pitcher_data(_pitcher_df_raw, _salary_df, _titles_df):
     df['防御率'] = pd.to_numeric(df['防御率'], errors='coerce')
     df['勝率']   = pd.to_numeric(df['勝率'],   errors='coerce')
 
+    # タイトルデータのマージ（年度列が分裂しないよう注意）
     titles_clean = _titles_df.dropna(subset=['選手名']).copy()
     titles_clean['選手名'] = titles_clean['選手名'].apply(normalize_name)
     title_summary = titles_clean.groupby(['選手名', '年度']).size().reset_index(name='タイトル数')
     df = pd.merge(df, title_summary, on=['選手名', '年度'], how='left')
     df['タイトル数'] = df['タイトル数'].fillna(0)
 
-    # 正規化後の選手名を再表示
-    st.write("【投手CSV】正規化後の選手名サンプル:", df['選手名'].head(5).tolist())
-    st.write("【年俸CSV】正規化後の選手名サンプル:", salary_long['選手名'].head(5).tolist())
+    # マージ後に年度列名が変わっていたら修正
+    if '年度_x' in df.columns:
+        df.rename(columns={'年度_x': '年度'}, inplace=True)
+    if '年度_y' in df.columns:
+        df.drop(columns=['年度_y'], inplace=True)
+
+    salary_long = prepare_salary_long(_salary_df)
+
+    # 年俸データは2023〜2025のみなので、投手CSVも該当年度に絞る
+    df_filtered = df[df['年度'].isin([2022, 2023, 2024, 2025])].copy()
 
     # ── マージ戦略1: 翌年度マージ（成績年 → 翌年の年俸） ──
-    df['予測年度'] = df['年度'] + 1
+    df_filtered['予測年度'] = df_filtered['年度'] + 1
     merged = pd.merge(
-        df,
+        df_filtered,
         salary_long,
         left_on=['選手名', '予測年度'],
         right_on=['選手名', '年度'],
         suffixes=('_成績', '_年俸')
     )
-    st.write(f"【翌年度マージ結果】{len(merged)}件")
 
     # ── マージ戦略2: 結果が少なければ同年度マージも追加 ──
     if len(merged) < 10:
         merged_same = pd.merge(
-            df,
+            df_filtered,
             salary_long,
             left_on=['選手名', '年度'],
             right_on=['選手名', '年度'],
             suffixes=('_成績', '_年俸')
         )
-        st.write(f"【同年度マージ結果】{len(merged_same)}件")
-
         # 年俸列名を統一
         for alt_col in ['年俸_円_年俸', '年俸_円_成績']:
             if alt_col in merged_same.columns and '年俸_円' not in merged_same.columns:
@@ -1764,3 +1755,6 @@ else:
 
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powered by Streamlit*")
+
+st.cache_data.clear()
+st.cache_resource.clear()
