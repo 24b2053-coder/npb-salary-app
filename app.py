@@ -324,6 +324,11 @@ if 'model_trained' not in st.session_state:
 if 'prediction_history' not in st.session_state:
     st.session_state.prediction_history = []
 
+# デバッグ用: キャッシュ強制クリア・毎回再訓練
+st.cache_data.clear()
+st.cache_resource.clear()
+st.session_state.model_trained = False
+
 # ============================================================
 # データ読み込み
 # ============================================================
@@ -400,6 +405,11 @@ if not data_loaded:
 def prepare_salary_long(_salary_df):
     """横持ちCSVをlong形式に変換"""
     df = _salary_df.copy()
+
+    # デバッグ: 実際の列名を表示
+    st.write("【年俸CSV】実際の列名:", df.columns.tolist())
+    st.write("【年俸CSV】先頭1行:", df.iloc[0].to_dict() if len(df) > 0 else "データなし")
+
     rows = []
     for _, row in df.iterrows():
         name23 = row.get('選手名_2023')
