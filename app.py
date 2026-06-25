@@ -759,6 +759,14 @@ if data_loaded:
                 st.metric("投手R²", "N/A")
 
         st.subheader("📖 使い方")
+
+        # キャッシュクリアボタン（古いキャッシュが残っている場合に使用）
+        if st.button("🔄 キャッシュをクリアして再読み込み", type="secondary"):
+            st.cache_data.clear()
+            st.cache_resource.clear()
+            st.session_state.model_trained = False
+            st.rerun()
+
         st.markdown("""
         1. **左サイドバー**のメニューから機能を選択
         2. **野手 / 投手**を切り替えて予測
