@@ -324,6 +324,11 @@ if 'model_trained' not in st.session_state:
 if 'prediction_history' not in st.session_state:
     st.session_state.prediction_history = []
 
+# キャッシュを強制クリア（デバッグ用）
+st.cache_data.clear()
+st.cache_resource.clear()
+st.session_state.model_trained = False  # デバッグ用: 毎回再訓練
+
 # ============================================================
 # データ読み込み
 # ============================================================
@@ -1759,6 +1764,3 @@ else:
 
 st.markdown("---")
 st.markdown("*NPB選手年俸予測システム - made by Sato&Kurokawa - Powered by Streamlit*")
-
-st.cache_data.clear()
-st.cache_resource.clear()
