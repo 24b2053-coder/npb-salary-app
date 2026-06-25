@@ -345,16 +345,8 @@ if 'prediction_history' not in st.session_state:
 @st.cache_data
 def load_data():
     try:
-        # ── 年俸: 3ファイルを個別に読み込んでconcatする ──
-        sal23 = pd.read_csv('data/besmoney_salary_2023.csv')
-        sal24 = pd.read_csv('data/besmoney_salary_2024.csv')
-        sal25 = pd.read_csv('data/besmoney_salary_2025.csv')
-        for df in [sal23, sal24, sal25]:
-            df.columns = [c.lstrip('\ufeff').strip() for c in df.columns]
-        sal23['年度'] = 2023
-        sal24['年度'] = 2024
-        sal25['年度'] = 2025
-        salary_df = pd.concat([sal23, sal24, sal25], ignore_index=True)
+        # 年俸: 年度別3ファイル
+        salary_df = pd.read_csv('data/salary_2023&2024&2025.csv')
 
         stats_2023  = pd.read_csv('data/stats_2023.csv')
         stats_2024  = pd.read_csv('data/stats_2024.csv')
@@ -372,12 +364,7 @@ salary_df, stats_2023, stats_2024, stats_2025, titles_df, pitcher_df_raw, data_l
 # ============================================================
 if not data_loaded:
     st.sidebar.markdown("**CSVファイルを選択してアップロード（8つ全て）：**")
-    st.sidebar.caption(
-        "besmoney_salary_2023/2024/2025.csv, "
-        "stats_2023/2024/2025.csv, "
-        "titles_2023&2024&2025.csv, "
-        "npb_pitcher_stats.csv"
-    )
+    st.sidebar.caption("besmoney_salary_2023/2024/2025.csv, stats_2023/2024/2025.csv, titles.csv, npb_pitcher_stats.csv")
     uploaded_files = st.sidebar.file_uploader(
         "CSVファイルを選択",
         type=['csv'],
@@ -388,12 +375,14 @@ if not data_loaded:
         file_dict = {}
         for file in uploaded_files:
             name = file.name.lower()
+            # 年俸ファイル（besmoney or salary）
             if ('besmoney' in name or 'salary' in name) and '2023' in name:
                 file_dict['salary_2023'] = file
             elif ('besmoney' in name or 'salary' in name) and '2024' in name:
                 file_dict['salary_2024'] = file
             elif ('besmoney' in name or 'salary' in name) and '2025' in name:
                 file_dict['salary_2025'] = file
+            # その他
             elif 'titles' in name or 'タイトル' in name:
                 file_dict['titles'] = file
             elif 'pitcher' in name or '投手' in name:
@@ -405,22 +394,14 @@ if not data_loaded:
             elif '2025' in name:
                 file_dict['stats_2025'] = file
 
-        required = ['salary_2023', 'salary_2024', 'salary_2025',
-                    'titles', 'stats_2023', 'stats_2024', 'stats_2025']
+        required = ['salary_2023', 'salary_2024', 'salary_2025', 'titles', 'stats_2023', 'stats_2024', 'stats_2025']
         missing = [k for k in required if k not in file_dict]
 
         if not missing:
-            # ── 年俸3ファイルをconcatしてsalary_dfを作成 ──
             sal23 = pd.read_csv(file_dict['salary_2023'])
             sal24 = pd.read_csv(file_dict['salary_2024'])
             sal25 = pd.read_csv(file_dict['salary_2025'])
-            for df in [sal23, sal24, sal25]:
-                df.columns = [c.lstrip('\ufeff').strip() for c in df.columns]
-            sal23['年度'] = 2023
-            sal24['年度'] = 2024
-            sal25['年度'] = 2025
-            salary_df = pd.concat([sal23, sal24, sal25], ignore_index=True)
-
+            salary_df = (sal23, sal24, sal25)
             stats_2023  = pd.read_csv(file_dict['stats_2023'])
             stats_2024  = pd.read_csv(file_dict['stats_2024'])
             stats_2025  = pd.read_csv(file_dict['stats_2025'])
@@ -436,14 +417,26 @@ if not data_loaded:
 # ============================================================
 @st.cache_data
 def prepare_salary_long(_salary_df):
-    """
-    3ファイルをconcatした salary_df（選手名・年俸_円・年度 列を持つ）を
-    long形式に整形する。旧コードの横持ち変換は不要。
-    """
-    df = _salary_df[['選手名', '年俸_円', '年度']].copy()
-    df = df[df['年俸_円'] > 0]
-    df = df.drop_duplicates(subset=['選手名', '年度'], keep='first')
-    return df.reset_index(drop=True)
+    """横持ちCSVをlong形式に変換"""
+    df = _salary_df.copy()
+    rows = []
+    for _, row in df.iterrows():
+        name23 = row.get('選手名_2023')
+        sal23  = row.get('年俸_円_2023')
+        name24 = row.get('選手名_2024_2025')
+        sal24  = row.get('年俸_円_2024')
+        sal25  = row.get('年俸_円_2025')
+
+        if pd.notna(name23) and pd.notna(sal23) and sal23 > 0:
+            rows.append({'選手名': name23, '年俸_円': sal23, '年度': 2023})
+        if pd.notna(name24) and pd.notna(sal24) and sal24 > 0:
+            rows.append({'選手名': name24, '年俸_円': sal24, '年度': 2024})
+        if pd.notna(name24) and pd.notna(sal25) and sal25 > 0:
+            rows.append({'選手名': name24, '年俸_円': sal25, '年度': 2025})
+
+    salary_long = pd.DataFrame(rows)
+    salary_long = salary_long.drop_duplicates(subset=['選手名', '年度'], keep='first')
+    return salary_long
 
 
 @st.cache_data
