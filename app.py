@@ -472,6 +472,15 @@ def prepare_pitcher_data(_pitcher_df_raw, _salary_df, _titles_df):
     df = _pitcher_df_raw.copy()
     df.columns = [c.lstrip('\ufeff').strip() for c in df.columns]
 
+    # ── デバッグ表示 ──
+    st.write("【投手CSV】列名:", df.columns.tolist())
+    st.write("【投手CSV】年度の値:", sorted(df['年度'].unique().tolist()) if '年度' in df.columns else "年度列なし")
+    st.write("【投手CSV】選手名サンプル（先頭5件）:", df['選手名'].head(5).tolist() if '選手名' in df.columns else "選手名列なし")
+
+    salary_long = prepare_salary_long(_salary_df)
+    st.write("【年俸CSV】年度の値:", sorted(salary_long['年度'].unique().tolist()))
+    st.write("【年俸CSV】選手名サンプル（先頭5件）:", salary_long['選手名'].head(5).tolist())
+
     # 選手名の正規化
     df['選手名'] = df['選手名'].apply(normalize_name)
 
@@ -485,7 +494,9 @@ def prepare_pitcher_data(_pitcher_df_raw, _salary_df, _titles_df):
     df = pd.merge(df, title_summary, on=['選手名', '年度'], how='left')
     df['タイトル数'] = df['タイトル数'].fillna(0)
 
-    salary_long = prepare_salary_long(_salary_df)
+    # 正規化後の選手名を再表示
+    st.write("【投手CSV】正規化後の選手名サンプル:", df['選手名'].head(5).tolist())
+    st.write("【年俸CSV】正規化後の選手名サンプル:", salary_long['選手名'].head(5).tolist())
 
     # ── マージ戦略1: 翌年度マージ（成績年 → 翌年の年俸） ──
     df['予測年度'] = df['年度'] + 1
@@ -496,6 +507,7 @@ def prepare_pitcher_data(_pitcher_df_raw, _salary_df, _titles_df):
         right_on=['選手名', '年度'],
         suffixes=('_成績', '_年俸')
     )
+    st.write(f"【翌年度マージ結果】{len(merged)}件")
 
     # ── マージ戦略2: 結果が少なければ同年度マージも追加 ──
     if len(merged) < 10:
@@ -506,6 +518,8 @@ def prepare_pitcher_data(_pitcher_df_raw, _salary_df, _titles_df):
             right_on=['選手名', '年度'],
             suffixes=('_成績', '_年俸')
         )
+        st.write(f"【同年度マージ結果】{len(merged_same)}件")
+
         # 年俸列名を統一
         for alt_col in ['年俸_円_年俸', '年俸_円_成績']:
             if alt_col in merged_same.columns and '年俸_円' not in merged_same.columns:
