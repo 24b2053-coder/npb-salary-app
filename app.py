@@ -345,11 +345,8 @@ if 'prediction_history' not in st.session_state:
 @st.cache_data
 def load_data():
     try:
-        # 年俸: 年度別3ファイル（besmoney_salary_2023/2024/2025.csv）
-        sal23 = pd.read_csv('data/besmoney_salary_2023.csv')
-        sal24 = pd.read_csv('data/besmoney_salary_2024.csv')
-        sal25 = pd.read_csv('data/besmoney_salary_2025.csv')
-        salary_df = (sal23, sal24, sal25)
+        # 年俸: 年度別3ファイル
+        salary_df = pd.read_csv('data/salary_2023&2024&2025.csv')
 
         stats_2023  = pd.read_csv('data/stats_2023.csv')
         stats_2024  = pd.read_csv('data/stats_2024.csv')
@@ -420,24 +417,24 @@ if not data_loaded:
 # ============================================================
 @st.cache_data
 def prepare_salary_long(_salary_df):
-    """
-    年度ごとに分かれた3つの縦持ちCSV (besmoney_salary_2023/2024/2025.csv) を
-    1本のlong形式DataFrameに変換する。
-    各CSVの列: 順位, 選手名, 年齢, ポジション, チーム, 年俸, 年俸_円
-    """
-    sal23, sal24, sal25 = _salary_df
+    """横持ちCSVをlong形式に変換"""
+    df = _salary_df.copy()
+    rows = []
+    for _, row in df.iterrows():
+        name23 = row.get('選手名_2023')
+        sal23  = row.get('年俸_円_2023')
+        name24 = row.get('選手名_2024_2025')
+        sal24  = row.get('年俸_円_2024')
+        sal25  = row.get('年俸_円_2025')
 
-    frames = []
-    for df, year in [(sal23, 2023), (sal24, 2024), (sal25, 2025)]:
-        d = df.copy()
-        d.columns = [str(c).lstrip('\ufeff').strip() for c in d.columns]
-        d['選手名'] = d['選手名'].astype(str).str.strip()
-        d['年度'] = year
-        d = d[['選手名', '年俸_円', '年度']]
-        d = d[d['年俸_円'] > 0]
-        frames.append(d)
+        if pd.notna(name23) and pd.notna(sal23) and sal23 > 0:
+            rows.append({'選手名': name23, '年俸_円': sal23, '年度': 2023})
+        if pd.notna(name24) and pd.notna(sal24) and sal24 > 0:
+            rows.append({'選手名': name24, '年俸_円': sal24, '年度': 2024})
+        if pd.notna(name24) and pd.notna(sal25) and sal25 > 0:
+            rows.append({'選手名': name24, '年俸_円': sal25, '年度': 2025})
 
-    salary_long = pd.concat(frames, ignore_index=True)
+    salary_long = pd.DataFrame(rows)
     salary_long = salary_long.drop_duplicates(subset=['選手名', '年度'], keep='first')
     return salary_long
 
