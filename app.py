@@ -427,6 +427,11 @@ def prepare_salary_long(_salary_df):
         sal24  = row.get('年俸_円_2024')
         sal25  = row.get('年俸_円_2025')
 
+        # 【修正】選手名の前後の空白を除去（投手データ側との突き合わせで
+        # 表記ゆれによりマージが失敗していたための対策）
+        name23 = str(name23).strip() if pd.notna(name23) else name23
+        name24 = str(name24).strip() if pd.notna(name24) else name24
+
         if pd.notna(name23) and pd.notna(sal23) and sal23 > 0:
             rows.append({'選手名': name23, '年俸_円': sal23, '年度': 2023})
         if pd.notna(name24) and pd.notna(sal24) and sal24 > 0:
@@ -449,6 +454,7 @@ def prepare_batter_data(_salary_df, _stats_2023, _stats_2024, _stats_2025, _titl
     s24 = _stats_2024.copy(); s24['年度'] = 2024
     s25 = _stats_2025.copy(); s25['年度'] = 2025
     stats_all = pd.concat([s23, s24, s25], ignore_index=True)
+    stats_all['選手名'] = stats_all['選手名'].astype(str).str.strip()
 
     salary_long = prepare_salary_long(_salary_df)
 
@@ -488,6 +494,7 @@ def prepare_pitcher_data(_pitcher_df_raw, _salary_df, _titles_df):
     """投手データの前処理"""
     df = _pitcher_df_raw.copy()
     df.columns = [c.lstrip('\ufeff').strip() for c in df.columns]
+    df['選手名'] = df['選手名'].astype(str).str.strip()
 
     df['投球回_実数'] = df['投球回'].apply(parse_innings_pitched)
     df['防御率'] = pd.to_numeric(df['防御率'], errors='coerce')
